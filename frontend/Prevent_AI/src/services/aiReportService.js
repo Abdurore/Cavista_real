@@ -39,7 +39,9 @@ const buildMockReport = (payload) => {
 
 export async function generatePreventionReport(payload) {
   if (!HF_API_KEY) {
-    return buildMockReport(payload)
+    throw new Error(
+      'Missing VITE_HF_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
+    )
   }
 
   const prompt = `You are a healthcare prevention assistant.
@@ -72,14 +74,21 @@ Patient Data:
         temperature: 0.3,
         return_full_text: false,
       },
+      options: {
+        wait_for_model: true,
+        use_cache: false,
+      },
     }),
   })
 
-  if (!response.ok) {
-    throw new Error(`Hugging Face request failed (${response.status})`)
-  }
+  const data = await parseApiResponse(response)
 
-  const data = await response.json()
+  if (!response.ok) {
+    const apiMessage = extractApiErrorMessage(data)
+    throw new Error(
+      apiMessage || `Hugging Face request failed (${response.status}). Check model access and API key.`,
+    )
+  }
 
   if (data?.error) {
     throw new Error(data.error)
@@ -97,8 +106,39 @@ Patient Data:
 
   return {
     report: rawText || 'No report was returned by the model.',
-    suggestions: [],
+    suggestions: buildMockReport(payload).suggestions,
   }
+}
+
+async function parseApiResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    return response.json()
+  }
+
+  const text = await response.text()
+  return { error: text || 'Unknown API error' }
+}
+
+function extractApiErrorMessage(data) {
+  if (!data) {
+    return ''
+  }
+
+  if (typeof data === 'string') {
+    return data
+  }
+
+  if (data.error && typeof data.error === 'string') {
+    return data.error
+  }
+
+  if (Array.isArray(data) && data[0]?.error) {
+    return data[0].error
+  }
+
+  return ''
 }
 
 function extractModelText(data) {
