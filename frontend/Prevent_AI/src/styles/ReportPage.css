@@ -56,6 +56,20 @@
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
+.report-risk-shell {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.report-risk-score {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.report-risk-label {
+  margin: 0;
+}
+
 .report-section ul {
   margin: 0;
   padding-left: 1.2rem;
