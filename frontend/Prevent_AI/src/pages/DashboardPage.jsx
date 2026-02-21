@@ -15,13 +15,13 @@ const queueItems = [
 
 function DashboardPage() {
   const location = useLocation()
-  const profile = location.state?.profile ?? 'User'
+  const assessmentLabel = location.state?.assessmentLabel ?? 'Assessment'
   const patientInput = location.state?.patientInput
   const generatedReport = location.state?.generatedReport
 
   return (
     <section className="page">
-      <h1>{profile} Dashboard</h1>
+      <h1>{assessmentLabel} Dashboard</h1>
       <p className="page-intro">
         This dashboard is prepared with logic placeholders and component shells for live backend
         data.
@@ -70,6 +70,9 @@ function DashboardPage() {
 
           {generatedReport && (
             <div className="report-shell">
+              <p>
+                <strong>Type:</strong> {assessmentLabel}
+              </p>
               <p>
                 <strong>Patient:</strong> {patientInput?.fullName}
               </p>
