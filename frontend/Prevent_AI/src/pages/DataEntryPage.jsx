@@ -3,13 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { generatePreventionReport } from '../services/aiReportService'
 
 const initialForm = {
-  patientId: '',
   fullName: '',
+  height: '',
+  weight: '',
   age: '',
-  visitDate: '',
   gender: 'female',
-  riskLevel: 'low',
-  notes: '',
 }
 
 function DataEntryPage() {
@@ -53,16 +51,6 @@ function DataEntryPage() {
       </p>
 
       <form className="data-form" onSubmit={handleSubmit}>
-        <label htmlFor="patientId">Patient ID</label>
-        <input
-          id="patientId"
-          name="patientId"
-          value={form.patientId}
-          onChange={handleChange}
-          placeholder="PA-2026-001"
-          required
-        />
-
         <label htmlFor="fullName">Full Name</label>
         <input
           id="fullName"
@@ -70,6 +58,32 @@ function DataEntryPage() {
           value={form.fullName}
           onChange={handleChange}
           placeholder="Jane Doe"
+          required
+        />
+
+        <label htmlFor="height">Height (cm)</label>
+        <input
+          id="height"
+          name="height"
+          type="number"
+          min="0"
+          step="0.1"
+          value={form.height}
+          onChange={handleChange}
+          placeholder="170"
+          required
+        />
+
+        <label htmlFor="weight">Weight (kg)</label>
+        <input
+          id="weight"
+          name="weight"
+          type="number"
+          min="0"
+          step="0.1"
+          value={form.weight}
+          onChange={handleChange}
+          placeholder="70"
           required
         />
 
@@ -85,39 +99,12 @@ function DataEntryPage() {
           required
         />
 
-        <label htmlFor="visitDate">Visit Date</label>
-        <input
-          id="visitDate"
-          name="visitDate"
-          type="date"
-          value={form.visitDate}
-          onChange={handleChange}
-          required
-        />
-
         <label htmlFor="gender">Gender</label>
         <select id="gender" name="gender" value={form.gender} onChange={handleChange}>
           <option value="female">Female</option>
           <option value="male">Male</option>
           <option value="other">Other</option>
         </select>
-
-        <label htmlFor="riskLevel">Risk Level</label>
-        <select id="riskLevel" name="riskLevel" value={form.riskLevel} onChange={handleChange}>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-
-        <label htmlFor="notes">Clinical Notes</label>
-        <textarea
-          id="notes"
-          name="notes"
-          value={form.notes}
-          onChange={handleChange}
-          rows={4}
-          placeholder="Add patient context and observations"
-        />
 
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? 'Generating Report...' : 'Generate Prevention Report'}
@@ -130,19 +117,19 @@ function DataEntryPage() {
         <article className="submitted-preview">
           <h2>Last Submission</h2>
           <p>
-            <strong>Patient:</strong> {submittedData.patientId}
-          </p>
-          <p>
             <strong>Name:</strong> {submittedData.fullName}
           </p>
           <p>
-            <strong>Visit Date:</strong> {submittedData.visitDate}
+            <strong>Height:</strong> {submittedData.height} cm
           </p>
           <p>
-            <strong>Risk:</strong> {submittedData.riskLevel}
+            <strong>Weight:</strong> {submittedData.weight} kg
           </p>
           <p>
-            <strong>Notes:</strong> {submittedData.notes || 'None'}
+            <strong>Age:</strong> {submittedData.age}
+          </p>
+          <p>
+            <strong>Gender:</strong> {submittedData.gender}
           </p>
           <p>
             <strong>AI Report:</strong> {submittedData.report}
