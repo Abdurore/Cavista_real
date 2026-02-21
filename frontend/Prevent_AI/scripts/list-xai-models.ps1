@@ -1,4 +1,5 @@
 $envFile = ".env"
+Add-Type -AssemblyName System.Net.Http
 
 if (!(Test-Path $envFile)) {
   Write-Error "Missing .env file in frontend/Prevent_AI."
@@ -18,10 +19,18 @@ if ([string]::IsNullOrWhiteSpace($apiKey)) {
 }
 
 try {
-  $response = Invoke-RestMethod -Method GET -Uri "https://api.x.ai/v1/models" -Headers @{
-    Authorization = "Bearer $apiKey"
+  $client = New-Object System.Net.Http.HttpClient
+  $client.DefaultRequestHeaders.Authorization = New-Object System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", $apiKey)
+
+  $httpResponse = $client.GetAsync("https://api.x.ai/v1/models").Result
+  $responseBody = $httpResponse.Content.ReadAsStringAsync().Result
+
+  if (-not $httpResponse.IsSuccessStatusCode) {
+    Write-Error "xAI request failed ($([int]$httpResponse.StatusCode) $($httpResponse.ReasonPhrase)).`n$responseBody"
+    exit 1
   }
 
+  $response = $responseBody | ConvertFrom-Json
   $models = $response.data | Select-Object -ExpandProperty id
   if (-not $models) {
     Write-Output "No models returned."
