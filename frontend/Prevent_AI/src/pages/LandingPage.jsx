@@ -11,7 +11,7 @@ function LandingPage() {
       </p>
       <div className="action-row">
         <Link className="btn-primary" to="/profile-selection">
-          Get Started
+          Start Assessment
         </Link>
         <Link className="btn-secondary" to="/dashboard">
           Open Dashboard
