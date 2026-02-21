@@ -1,8 +1,8 @@
 const HF_API_KEY = import.meta.env.VITE_HF_API_KEY
 const HF_MODEL = import.meta.env.VITE_HF_MODEL || 'google/flan-t5-large'
 const HF_API_URL = import.meta.env.DEV
-  ? `/hf-api/models/${HF_MODEL}`
-  : `https://api-inference.huggingface.co/models/${HF_MODEL}`
+  ? `/hf-api/hf-inference/models/${HF_MODEL}`
+  : `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`
 
 const buildMockReport = (payload) => {
   const riskLevel = payload.riskLevel?.toLowerCase() ?? 'low'
