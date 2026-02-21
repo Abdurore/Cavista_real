@@ -71,7 +71,7 @@ function DashboardPage() {
           {generatedReport && (
             <div className="report-shell">
               <p>
-                <strong>Patient:</strong> {patientInput?.fullName || patientInput?.patientId}
+                <strong>Patient:</strong> {patientInput?.fullName}
               </p>
               <p>
                 <strong>Report:</strong> {generatedReport.report}
