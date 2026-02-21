@@ -49,7 +49,7 @@ function DataEntryPage() {
     <section className="page">
       <h1>Data Entry</h1>
       <p className="page-intro">
-        Enter user data and generate an AI prevention report from Gemini.
+        Enter user data and generate an AI prevention report from Grok.
       </p>
 
       <form className="data-form" onSubmit={handleSubmit}>

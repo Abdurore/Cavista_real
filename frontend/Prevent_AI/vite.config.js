@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/gemini-api': {
-        target: 'https://generativelanguage.googleapis.com',
+      '/grok-api': {
+        target: 'https://api.x.ai',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/gemini-api/, ''),
+        rewrite: (path) => path.replace(/^\/grok-api/, ''),
       },
     },
   },
