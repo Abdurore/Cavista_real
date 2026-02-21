@@ -230,6 +230,49 @@
   cursor: pointer;
 }
 
+.adult-gender-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.adult-gender-option {
+  border: 1px solid #d5deec;
+  background: #f8fafc;
+  color: #334155;
+  border-radius: 12px;
+  padding: 0.7rem 0.55rem;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.adult-gender-option:hover {
+  border-color: #bb243e;
+  background: #fff5f7;
+  color: #8e1f34;
+}
+
+.adult-gender-option.selected {
+  border-color: #bb243e;
+  background: linear-gradient(135deg, #bb243e 0%, #d73a52 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 16px rgba(187, 36, 62, 0.2);
+}
+
+.adult-gender-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(187, 36, 62, 0.18);
+}
+
+.adult-field-error {
+  margin: 0.5rem 0 0;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* Blood pressure specific */
 .adult-bp-card .adult-bp-inputs {
   display: flex;

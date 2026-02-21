@@ -64,10 +64,50 @@
 .report-risk-score {
   margin: 0;
   font-size: 1.15rem;
+  font-weight: 700;
+  color: #8d1e32;
 }
 
 .report-risk-label {
   margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #a93a52;
+}
+
+.report-highlights {
+  background: #fff8fa;
+  border: 1px solid #f8d9df;
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.report-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+
+.report-highlights-grid > div {
+  background: #ffffff;
+  border: 1px solid #f2d6dc;
+  border-radius: 12px;
+  padding: 0.75rem;
+}
+
+.report-markdown h3 {
+  margin: 1rem 0 0.35rem;
+  color: #8d1e32;
+  font-size: 1rem;
+}
+
+.report-markdown p {
+  margin: 0.55rem 0;
+}
+
+.report-markdown ul {
+  margin-top: 0.45rem;
 }
 
 .report-section ul {

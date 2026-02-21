@@ -18,6 +18,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
   });
 
   const [focusedField, setFocusedField] = useState(null);
+  const [showGenderError, setShowGenderError] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,6 +30,13 @@ const AdultForm = ({ onSubmit, onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (!formData.gender) {
+      setShowGenderError(true);
+      setFocusedField('gender');
+      return;
+    }
+
     onSubmit(formData);
   };
 
@@ -41,6 +49,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
   ];
 
   const currentStress = stressLevels.find(s => s.value === formData.stress) || stressLevels[2];
+  const genderOptions = ['male', 'female', 'other'];
 
   return (
     <div className="adult-form-container">
@@ -98,19 +107,26 @@ const AdultForm = ({ onSubmit, onBack }) => {
                 <img src={editIcon} alt="" className="adult-input-icon" />
                 <label>Gender</label>
               </div>
-              <select 
-                name="gender" 
-                value={formData.gender} 
-                onChange={handleChange}
-                onFocus={() => setFocusedField('gender')}
-                onBlur={() => setFocusedField(null)}
-                required
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="adult-gender-options" role="radiogroup" aria-label="Gender">
+                {genderOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="radio"
+                    aria-checked={formData.gender === option}
+                    className={`adult-gender-option ${formData.gender === option ? 'selected' : ''}`}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, gender: option }));
+                      setShowGenderError(false);
+                    }}
+                    onFocus={() => setFocusedField('gender')}
+                    onBlur={() => setFocusedField(null)}
+                  >
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+              {showGenderError && <p className="adult-field-error">Please select a gender option.</p>}
             </div>
           </div>
 
