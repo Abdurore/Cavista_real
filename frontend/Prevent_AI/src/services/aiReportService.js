@@ -1,5 +1,6 @@
 const GROK_API_KEY = import.meta.env.VITE_GROK_API_KEY
-const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || 'grok-3-mini'
+const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || ''
+const GROK_MODEL_FALLBACKS = import.meta.env.VITE_GROK_MODEL_FALLBACKS || ''
 const GROK_BASE_URL = import.meta.env.DEV ? '/grok-api' : 'https://api.x.ai'
 const GROK_API_URL = `${GROK_BASE_URL}/v1/chat/completions`
 
@@ -102,6 +103,15 @@ export async function generatePreventionReport(payload) {
       'Missing VITE_GROK_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
     )
   }
+  const candidateModels = [GROK_MODEL, ...GROK_MODEL_FALLBACKS.split(',')]
+    .map((value) => value.trim())
+    .filter(Boolean)
+
+  if (candidateModels.length === 0) {
+    throw new Error(
+      'Missing VITE_GROK_MODEL. Add at least one model name in frontend/Prevent_AI/.env and restart the Vite dev server.',
+    )
+  }
 
   const prompt = `You are a healthcare prevention assistant.
 Return valid JSON only using this schema:
@@ -129,32 +139,42 @@ Additional Fields:
 
 Generate a short prevention report and exactly 3 actionable prevention suggestions.`
 
-  const response = await fetch(GROK_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${GROK_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: GROK_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 500,
-    }),
-  })
+  let data = null
+  let lastApiError = ''
 
-  const data = await parseApiResponse(response)
+  for (const modelName of candidateModels) {
+    const response = await fetch(GROK_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 500,
+      }),
+    })
 
-  if (!response.ok) {
+    data = await parseApiResponse(response)
+
+    if (response.ok) {
+      break
+    }
+
     const apiMessage = extractApiErrorMessage(data)
-    throw new Error(
-      apiMessage ||
-        `Grok request failed (${response.status}). Check VITE_GROK_MODEL, API key, and billing/quota.`,
-    )
+    lastApiError = apiMessage || `Grok request failed (${response.status}).`
+    if (!isModelNotFoundError(lastApiError)) {
+      throw new Error(lastApiError)
+    }
   }
 
-  if (data?.error || data?.message) {
-    throw new Error(data.error?.message || data.error || data.message)
+  if (!data || data?.error || data?.message) {
+    throw new Error(
+      lastApiError ||
+        'None of the configured Grok models are available. Update VITE_GROK_MODEL or VITE_GROK_MODEL_FALLBACKS.',
+    )
   }
 
   const rawText = extractGrokText(data)
@@ -171,6 +191,11 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
     report: rawText || 'No report was returned by the model.',
     suggestions: buildMockReport(payload).suggestions,
   }
+}
+
+function isModelNotFoundError(message) {
+  const normalized = String(message || '').toLowerCase()
+  return normalized.includes('model not found') || normalized.includes('unknown model')
 }
 
 async function parseApiResponse(response) {
