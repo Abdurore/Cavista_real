@@ -1,5 +1,5 @@
 const GROK_API_KEY = import.meta.env.VITE_GROK_API_KEY
-const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || 'grok-2-latest'
+const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || 'grok-3-mini'
 const GROK_BASE_URL = import.meta.env.DEV ? '/grok-api' : 'https://api.x.ai'
 const GROK_API_URL = `${GROK_BASE_URL}/v1/chat/completions`
 
