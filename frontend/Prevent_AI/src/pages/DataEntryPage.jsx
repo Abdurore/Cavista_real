@@ -117,7 +117,7 @@ function DataEntryPage() {
           placeholder="Add patient context and observations"
         />
 
-        <button type="submit" className="btn-primary">
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>
           {isSubmitting ? 'Generating Report...' : 'Generate Prevention Report'}
         </button>
 
