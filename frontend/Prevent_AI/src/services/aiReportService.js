@@ -1,8 +1,8 @@
-const GROK_API_KEY = import.meta.env.VITE_GROK_API_KEY
-const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || ''
-const GROK_MODEL_FALLBACKS = import.meta.env.VITE_GROK_MODEL_FALLBACKS || ''
-const GROK_BASE_URL = import.meta.env.DEV ? '/grok-api' : 'https://api.x.ai'
-const GROK_API_URL = `${GROK_BASE_URL}/v1/chat/completions`
+const HF_API_KEY = import.meta.env.VITE_HF_API_KEY
+const HF_MODEL = import.meta.env.VITE_HF_MODEL || ''
+const HF_MODEL_FALLBACKS = import.meta.env.VITE_HF_MODEL_FALLBACKS || ''
+const HF_BASE_URL = import.meta.env.DEV ? '/hf-api' : 'https://router.huggingface.co'
+const HF_API_URL = `${HF_BASE_URL}/v1/chat/completions`
 
 const buildMockReport = (payload) => {
   if (payload.assessmentType === 'pregnant_woman') {
@@ -98,18 +98,18 @@ const buildPregnancyMockReport = (payload) => {
 }
 
 export async function generatePreventionReport(payload) {
-  if (!GROK_API_KEY) {
+  if (!HF_API_KEY) {
     throw new Error(
-      'Missing VITE_GROK_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
+      'Missing VITE_HF_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
     )
   }
-  const candidateModels = [GROK_MODEL, ...GROK_MODEL_FALLBACKS.split(',')]
+  const candidateModels = [HF_MODEL, ...HF_MODEL_FALLBACKS.split(',')]
     .map((value) => value.trim())
-    .filter(Boolean)
+    .filter((value) => value && !isPlaceholderModel(value))
 
   if (candidateModels.length === 0) {
     throw new Error(
-      'Missing VITE_GROK_MODEL. Add at least one model name in frontend/Prevent_AI/.env and restart the Vite dev server.',
+      'Missing valid model names. Set VITE_HF_MODEL (and optional VITE_HF_MODEL_FALLBACKS) in frontend/Prevent_AI/.env, then restart the Vite dev server.',
     )
   }
 
@@ -143,11 +143,11 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
   let lastApiError = ''
 
   for (const modelName of candidateModels) {
-    const response = await fetch(GROK_API_URL, {
+    const response = await fetch(HF_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${GROK_API_KEY}`,
+        Authorization: `Bearer ${HF_API_KEY}`,
       },
       body: JSON.stringify({
         model: modelName,
@@ -164,7 +164,7 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
     }
 
     const apiMessage = extractApiErrorMessage(data)
-    lastApiError = apiMessage || `Grok request failed (${response.status}).`
+    lastApiError = apiMessage || `Hugging Face request failed (${response.status}).`
     if (!isModelNotFoundError(lastApiError)) {
       throw new Error(lastApiError)
     }
@@ -173,11 +173,11 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
   if (!data || data?.error || data?.message) {
     throw new Error(
       lastApiError ||
-        'None of the configured Grok models are available. Update VITE_GROK_MODEL or VITE_GROK_MODEL_FALLBACKS.',
+        'None of the configured Hugging Face models are available. Update VITE_HF_MODEL or VITE_HF_MODEL_FALLBACKS.',
     )
   }
 
-  const rawText = extractGrokText(data)
+  const rawText = extractHFText(data)
   const parsed = parseModelOutput(rawText)
 
   if (parsed) {
@@ -196,6 +196,11 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
 function isModelNotFoundError(message) {
   const normalized = String(message || '').toLowerCase()
   return normalized.includes('model not found') || normalized.includes('unknown model')
+}
+
+function isPlaceholderModel(value) {
+  const normalized = String(value || '').toLowerCase()
+  return normalized.includes('<') || normalized.includes('>') || normalized.includes('your_')
 }
 
 async function parseApiResponse(response) {
@@ -241,7 +246,7 @@ function extractApiErrorMessage(data) {
   }
 }
 
-function extractGrokText(data) {
+function extractHFText(data) {
   return data?.choices?.[0]?.message?.content || ''
 }
 
