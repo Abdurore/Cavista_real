@@ -3,19 +3,14 @@ import { useNavigate } from 'react-router-dom'
 
 const profiles = [
   {
-    id: 'clinician',
-    title: 'Clinician',
-    description: 'Review patient flags and monitor risk trends.',
+    id: 'general_adult',
+    title: 'General Adult',
+    description: 'Adult prevention assessment form and lifestyle risk review.',
   },
   {
-    id: 'analyst',
-    title: 'Data Analyst',
-    description: 'Track metrics and quality indicators.',
-  },
-  {
-    id: 'admin',
-    title: 'Admin',
-    description: 'Manage operations and staff access.',
+    id: 'pregnant_woman',
+    title: 'Pregnant Woman',
+    description: 'Maternal health and pregnancy-specific prevention assessment.',
   },
 ]
 
@@ -29,13 +24,15 @@ function ProfileSelectionPage() {
   )
 
   const handleContinue = () => {
-    navigate('/dashboard', { state: { profile: selectedLabel } })
+    navigate('/data-entry', {
+      state: { assessmentType: selectedProfile, assessmentLabel: selectedLabel },
+    })
   }
 
   return (
     <section className="page">
-      <h1>Select Your Role</h1>
-      <p className="page-intro">Choose a profile to continue into the dashboard.</p>
+      <h1>Select Assessment Type</h1>
+      <p className="page-intro">Choose which form schema to use for data entry.</p>
       <div className="profile-grid">
         {profiles.map((profile) => (
           <button
@@ -51,7 +48,7 @@ function ProfileSelectionPage() {
       </div>
       <div className="action-row">
         <button type="button" className="btn-primary" onClick={handleContinue}>
-          Continue as {selectedLabel}
+          Continue with {selectedLabel}
         </button>
       </div>
     </section>
