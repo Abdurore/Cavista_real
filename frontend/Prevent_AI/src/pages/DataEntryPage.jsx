@@ -1,25 +1,64 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { generatePreventionReport } from '../services/aiReportService'
 
-const initialForm = {
+const initialGeneralAdultForm = {
   fullName: '',
   height: '',
   weight: '',
   age: '',
   gender: 'female',
+  bloodPressureSystolic: '',
+  bloodPressureDiastolic: '',
+  bloodSugar: '',
+  sleepHours: '',
+  exerciseDays: '',
+  stressLevel: 'low',
+}
+
+const initialPregnantForm = {
+  fullName: '',
+  age: '',
+  height: '',
+  weight: '',
+  gestationalAgeWeeks: '',
+  firstPregnancy: 'yes',
+  historyHighRiskPregnancy: 'no',
+  bloodPressureSystolic: '',
+  bloodPressureDiastolic: '',
+  bloodSugar: '',
+  sleepHours: '',
+  waterIntake: '',
+  stressLevel: 'low',
 }
 
 function DataEntryPage() {
+  const location = useLocation()
   const navigate = useNavigate()
-  const [form, setForm] = useState(initialForm)
+
+  const defaultType = location.state?.assessmentType === 'pregnant_woman' ? 'pregnant_woman' : 'general_adult'
+  const [assessmentType, setAssessmentType] = useState(defaultType)
+  const [generalAdultForm, setGeneralAdultForm] = useState(initialGeneralAdultForm)
+  const [pregnantForm, setPregnantForm] = useState(initialPregnantForm)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [apiError, setApiError] = useState('')
   const [submittedData, setSubmittedData] = useState(null)
 
+  const form = assessmentType === 'pregnant_woman' ? pregnantForm : generalAdultForm
+  const assessmentLabel = useMemo(
+    () => (assessmentType === 'pregnant_woman' ? 'Pregnant Woman' : 'General Adult'),
+    [assessmentType],
+  )
+
   const handleChange = (event) => {
     const { name, value } = event.target
-    setForm((current) => ({ ...current, [name]: value }))
+
+    if (assessmentType === 'pregnant_woman') {
+      setPregnantForm((current) => ({ ...current, [name]: value }))
+      return
+    }
+
+    setGeneralAdultForm((current) => ({ ...current, [name]: value }))
   }
 
   const handleSubmit = async (event) => {
@@ -28,11 +67,13 @@ function DataEntryPage() {
     setIsSubmitting(true)
 
     try {
-      const aiResult = await generatePreventionReport(form)
-      setSubmittedData({ ...form, ...aiResult })
+      const payload = { assessmentType, ...form }
+      const aiResult = await generatePreventionReport(payload)
+      setSubmittedData({ ...payload, ...aiResult })
       navigate('/dashboard', {
         state: {
-          patientInput: form,
+          assessmentLabel,
+          patientInput: payload,
           generatedReport: aiResult,
         },
       })
@@ -47,8 +88,26 @@ function DataEntryPage() {
     <section className="page">
       <h1>Data Entry</h1>
       <p className="page-intro">
-        Enter user data and generate an AI prevention report from Grok.
+        Enter required fields for {assessmentLabel} and generate an AI prevention report from
+        Grok.
       </p>
+
+      <div className="action-row">
+        <button
+          type="button"
+          className={assessmentType === 'general_adult' ? 'btn-primary' : 'btn-secondary'}
+          onClick={() => setAssessmentType('general_adult')}
+        >
+          General Adult Form
+        </button>
+        <button
+          type="button"
+          className={assessmentType === 'pregnant_woman' ? 'btn-primary' : 'btn-secondary'}
+          onClick={() => setAssessmentType('pregnant_woman')}
+        >
+          Pregnant Woman Form
+        </button>
+      </div>
 
       <form className="data-form" onSubmit={handleSubmit}>
         <label htmlFor="fullName">Full Name</label>
@@ -99,11 +158,144 @@ function DataEntryPage() {
           required
         />
 
-        <label htmlFor="gender">Gender</label>
-        <select id="gender" name="gender" value={form.gender} onChange={handleChange}>
-          <option value="female">Female</option>
-          <option value="male">Male</option>
-          <option value="other">Other</option>
+        {assessmentType === 'general_adult' && (
+          <>
+            <label htmlFor="gender">Gender</label>
+            <select id="gender" name="gender" value={form.gender} onChange={handleChange}>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </>
+        )}
+
+        {assessmentType === 'pregnant_woman' && (
+          <>
+            <label htmlFor="gestationalAgeWeeks">Gestational Age (Weeks)</label>
+            <input
+              id="gestationalAgeWeeks"
+              name="gestationalAgeWeeks"
+              type="number"
+              min="0"
+              value={form.gestationalAgeWeeks}
+              onChange={handleChange}
+              placeholder="24"
+              required
+            />
+
+            <label htmlFor="firstPregnancy">First Pregnancy?</label>
+            <select
+              id="firstPregnancy"
+              name="firstPregnancy"
+              value={form.firstPregnancy}
+              onChange={handleChange}
+            >
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+
+            <label htmlFor="historyHighRiskPregnancy">History of High-Risk Pregnancy?</label>
+            <select
+              id="historyHighRiskPregnancy"
+              name="historyHighRiskPregnancy"
+              value={form.historyHighRiskPregnancy}
+              onChange={handleChange}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </>
+        )}
+
+        <label htmlFor="bloodPressureSystolic">Blood Pressure Systolic</label>
+        <input
+          id="bloodPressureSystolic"
+          name="bloodPressureSystolic"
+          type="number"
+          min="0"
+          value={form.bloodPressureSystolic}
+          onChange={handleChange}
+          placeholder="120"
+          required
+        />
+
+        <label htmlFor="bloodPressureDiastolic">Blood Pressure Diastolic</label>
+        <input
+          id="bloodPressureDiastolic"
+          name="bloodPressureDiastolic"
+          type="number"
+          min="0"
+          value={form.bloodPressureDiastolic}
+          onChange={handleChange}
+          placeholder="80"
+          required
+        />
+
+        <label htmlFor="bloodSugar">Blood Sugar</label>
+        <input
+          id="bloodSugar"
+          name="bloodSugar"
+          type="number"
+          min="0"
+          step="0.1"
+          value={form.bloodSugar}
+          onChange={handleChange}
+          placeholder="95"
+          required
+        />
+
+        <label htmlFor="sleepHours">Sleep Hours (per night)</label>
+        <input
+          id="sleepHours"
+          name="sleepHours"
+          type="number"
+          min="0"
+          step="0.1"
+          value={form.sleepHours}
+          onChange={handleChange}
+          placeholder="7.5"
+          required
+        />
+
+        {assessmentType === 'general_adult' && (
+          <>
+            <label htmlFor="exerciseDays">Exercise Days (per week)</label>
+            <input
+              id="exerciseDays"
+              name="exerciseDays"
+              type="number"
+              min="0"
+              max="7"
+              value={form.exerciseDays}
+              onChange={handleChange}
+              placeholder="3"
+              required
+            />
+          </>
+        )}
+
+        {assessmentType === 'pregnant_woman' && (
+          <>
+            <label htmlFor="waterIntake">Water Intake (per day)</label>
+            <input
+              id="waterIntake"
+              name="waterIntake"
+              type="number"
+              min="0"
+              step="0.1"
+              value={form.waterIntake}
+              onChange={handleChange}
+              placeholder="2.5"
+              required
+            />
+          </>
+        )}
+
+        <label htmlFor="stressLevel">Stress Level</label>
+        <select id="stressLevel" name="stressLevel" value={form.stressLevel} onChange={handleChange}>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
         </select>
 
         <button type="submit" className="btn-primary" disabled={isSubmitting}>
@@ -117,6 +309,9 @@ function DataEntryPage() {
         <article className="submitted-preview">
           <h2>Last Submission</h2>
           <p>
+            <strong>Assessment Type:</strong> {submittedData.assessmentType}
+          </p>
+          <p>
             <strong>Name:</strong> {submittedData.fullName}
           </p>
           <p>
@@ -128,9 +323,11 @@ function DataEntryPage() {
           <p>
             <strong>Age:</strong> {submittedData.age}
           </p>
-          <p>
-            <strong>Gender:</strong> {submittedData.gender}
-          </p>
+          {submittedData.gender && (
+            <p>
+              <strong>Gender:</strong> {submittedData.gender}
+            </p>
+          )}
           <p>
             <strong>AI Report:</strong> {submittedData.report}
           </p>
