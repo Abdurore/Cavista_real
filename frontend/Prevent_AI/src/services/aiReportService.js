@@ -1,9 +1,7 @@
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
-const GEMINI_BASE_URL = import.meta.env.DEV
-  ? '/gemini-api'
-  : 'https://generativelanguage.googleapis.com'
-const GEMINI_API_URL = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent`
+const GROK_API_KEY = import.meta.env.VITE_GROK_API_KEY
+const GROK_MODEL = import.meta.env.VITE_GROK_MODEL || 'grok-2-latest'
+const GROK_BASE_URL = import.meta.env.DEV ? '/grok-api' : 'https://api.x.ai'
+const GROK_API_URL = `${GROK_BASE_URL}/v1/chat/completions`
 
 const buildMockReport = (payload) => {
   const riskLevel = payload.riskLevel?.toLowerCase() ?? 'low'
@@ -41,9 +39,9 @@ const buildMockReport = (payload) => {
 }
 
 export async function generatePreventionReport(payload) {
-  if (!GEMINI_API_KEY) {
+  if (!GROK_API_KEY) {
     throw new Error(
-      'Missing VITE_GEMINI_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
+      'Missing VITE_GROK_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
     )
   }
 
@@ -62,18 +60,17 @@ Patient Data:
 
 Generate a short prevention report and exactly 3 actionable prevention suggestions.`
 
-  const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
+  const response = await fetch(GROK_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${GROK_API_KEY}`,
     },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 500,
-        responseMimeType: 'application/json',
-      },
+      model: GROK_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 500,
     }),
   })
 
@@ -83,7 +80,7 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
     const apiMessage = extractApiErrorMessage(data)
     throw new Error(
       apiMessage ||
-        `Gemini request failed (${response.status}). Check VITE_GEMINI_MODEL, API key, and billing/quota.`,
+        `Grok request failed (${response.status}). Check VITE_GROK_MODEL, API key, and billing/quota.`,
     )
   }
 
@@ -91,7 +88,7 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
     throw new Error(data.error?.message || data.error || data.message)
   }
 
-  const rawText = extractGeminiText(data)
+  const rawText = extractGrokText(data)
   const parsed = parseModelOutput(rawText)
 
   if (parsed) {
@@ -150,8 +147,8 @@ function extractApiErrorMessage(data) {
   }
 }
 
-function extractGeminiText(data) {
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+function extractGrokText(data) {
+  return data?.choices?.[0]?.message?.content || ''
 }
 
 function parseModelOutput(text) {
