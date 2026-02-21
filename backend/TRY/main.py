@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 try:
     from .model import AdultInput, PregnantInput, AnalysisResponse, ErrorResponse
-    from .risk_engine import analyze_adult_risk, analyze_pregnant_risk
+    from .risk_engine import analyze_adult_risk, analyze_pregnant_risk, AnalysisUnavailableError
+    from .config import Config
 except ImportError:
     from model import AdultInput, PregnantInput, AnalysisResponse, ErrorResponse
-    from risk_engine import analyze_adult_risk, analyze_pregnant_risk
+    from risk_engine import analyze_adult_risk, analyze_pregnant_risk, AnalysisUnavailableError
+    from config import Config
 import logging
 import time
 
@@ -20,8 +22,8 @@ app = FastAPI(
 # Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend URL
-    allow_credentials=True,
+    allow_origins=Config.ALLOWED_ORIGINS,
+    allow_credentials=Config.ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -40,7 +42,15 @@ def health_check():
     return {"status": "healthy", "timestamp": time.time()}
 
 # ============== ADULT ANALYSIS ENDPOINT ==============
-@app.post("/analyze/adult", response_model=AnalysisResponse, responses={400: {"model": ErrorResponse}})
+@app.post(
+    "/analyze/adult",
+    response_model=AnalysisResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
 async def analyze_adult(data: AdultInput):
     """
     Analyze health risks for general adult users.
@@ -55,18 +65,35 @@ async def analyze_adult(data: AdultInput):
         logger.info(f"Analysis complete: risk_score={result.risk_score}, level={result.risk_level}")
         return result
         
-    except Exception as e:
-        logger.error(f"Adult analysis failed: {str(e)}")
+    except AnalysisUnavailableError as e:
+        logger.warning(f"Adult AI analysis unavailable: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "error": "service_unavailable",
-                "message": "Advanced AI analysis failed. Please try again later."
+                "message": "Advanced AI analysis is currently unavailable. Please try again later.",
             }
+        )
+    except Exception:
+        logger.exception("Unexpected adult analysis error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "internal_error",
+                "message": "Unexpected internal server error.",
+            },
         )
 
 # ============== PREGNANT ANALYSIS ENDPOINT ==============
-@app.post("/analyze/pregnant", response_model=AnalysisResponse, responses={400: {"model": ErrorResponse}})
+@app.post(
+    "/analyze/pregnant",
+    response_model=AnalysisResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
 async def analyze_pregnant(data: PregnantInput):
     """
     Analyze health risks for pregnant women.
@@ -81,14 +108,23 @@ async def analyze_pregnant(data: PregnantInput):
         logger.info(f"Analysis complete: risk_score={result.risk_score}, level={result.risk_level}")
         return result
         
-    except Exception as e:
-        logger.error(f"Pregnant analysis failed: {str(e)}")
+    except AnalysisUnavailableError as e:
+        logger.warning(f"Pregnant AI analysis unavailable: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "error": "service_unavailable",
-                "message": "Advanced AI analysis failed. Please try again later."
+                "message": "Advanced AI analysis is currently unavailable. Please try again later.",
             }
+        )
+    except Exception:
+        logger.exception("Unexpected pregnant analysis error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "internal_error",
+                "message": "Unexpected internal server error.",
+            },
         )
 
 # ============== ERROR HANDLER ==============

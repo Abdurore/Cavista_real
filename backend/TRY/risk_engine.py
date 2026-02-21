@@ -1,14 +1,20 @@
+from typing import Any, Literal
+import httpx
+import json
+import logging
+
 try:
     from .model import AdultInput, PregnantInput, RiskCard, RiskLevel, AnalysisResponse
     from .config import Config
 except ImportError:
     from model import AdultInput, PregnantInput, RiskCard, RiskLevel, AnalysisResponse
     from config import Config
-import httpx
-import json
-import logging
 
 logger = logging.getLogger(__name__)
+
+
+class AnalysisUnavailableError(RuntimeError):
+    """Raised when external AI analysis is unavailable."""
 
 
 def calculate_bmi(height_cm: float, weight_kg: float) -> float:
@@ -26,7 +32,7 @@ def get_risk_level_from_score(score: int) -> RiskLevel:
     return RiskLevel.RED
 
 
-def _build_prompt(profile_type: str, data: dict) -> str:
+def _build_prompt(profile_type: Literal["adult", "pregnant"], data: dict) -> str:
     if profile_type == "adult":
         return f"""
         Analyze this adult health profile and return JSON only (no markdown):
@@ -72,33 +78,127 @@ def _build_prompt(profile_type: str, data: dict) -> str:
     """
 
 
-async def call_external_ai_api(profile_type: str, data: dict) -> dict | None:
-    """
-    Call external AI API for health risk analysis.
-    Returns parsed JSON response or None if failed.
-    """
-    if not Config.USE_EXTERNAL_AI or not Config.EXTERNAL_AI_API_URL:
-        logger.warning("External AI API disabled or not configured")
-        return None
+def _validate_external_ai_config() -> None:
+    if not Config.USE_EXTERNAL_AI:
+        raise AnalysisUnavailableError("External AI analysis is disabled (USE_EXTERNAL_AI=false).")
+
+    missing = []
+    if not Config.EXTERNAL_AI_API_URL:
+        missing.append("EXTERNAL_AI_API_URL")
+    if not Config.EXTERNAL_AI_API_KEY:
+        missing.append("EXTERNAL_AI_API_KEY")
+
+    if missing:
+        raise AnalysisUnavailableError(f"Missing required AI config: {', '.join(missing)}")
+
+
+def _flatten_content_blocks(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                text = item.get("text") or item.get("content")
+                if isinstance(text, str):
+                    parts.append(text)
+        return "\n".join(parts).strip()
+    return ""
+
+
+def _extract_text_from_provider_response(body: dict) -> str:
+    # Chat Completions-like shape
+    choices = body.get("choices")
+    if isinstance(choices, list) and choices:
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message")
+            if isinstance(message, dict):
+                content = _flatten_content_blocks(message.get("content"))
+                if content:
+                    return content
+
+            text = first.get("text")
+            if isinstance(text, str) and text.strip():
+                return text.strip()
+
+    # Responses API-like shape
+    output_text = body.get("output_text")
+    if isinstance(output_text, str) and output_text.strip():
+        return output_text.strip()
+
+    output = body.get("output")
+    if isinstance(output, list):
+        for block in output:
+            if isinstance(block, dict):
+                content_items = block.get("content")
+                if isinstance(content_items, list):
+                    for item in content_items:
+                        if isinstance(item, dict):
+                            text = item.get("text")
+                            if isinstance(text, str) and text.strip():
+                                return text.strip()
+
+    raise AnalysisUnavailableError("Unsupported AI response format: no text content found.")
+
+
+def _parse_json_text(raw_text: str) -> dict:
+    text = raw_text.strip()
+    if not text:
+        raise AnalysisUnavailableError("AI response content is empty.")
+
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines:
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
 
     try:
-        headers = {
-            "Authorization": f"Bearer {Config.EXTERNAL_AI_API_KEY}",
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": "meta-llama/Llama-3.1-8B-Instruct",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a medical risk assessment AI. Return ONLY valid JSON, no markdown, no explanations.",
-                },
-                {"role": "user", "content": _build_prompt(profile_type, data)},
-            ],
-            "temperature": 0.3,
-            "max_tokens": 1000,
-        }
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise AnalysisUnavailableError("AI response was not valid JSON.")
+        try:
+            parsed = json.loads(text[start : end + 1])
+        except json.JSONDecodeError as exc:
+            raise AnalysisUnavailableError("AI response JSON parsing failed.") from exc
 
+    if not isinstance(parsed, dict):
+        raise AnalysisUnavailableError("AI response JSON must be an object.")
+    return parsed
+
+
+async def call_external_ai_api(profile_type: Literal["adult", "pregnant"], data: dict) -> dict:
+    """
+    Call external AI API for health risk analysis.
+    Returns a parsed JSON object with analysis fields.
+    """
+    _validate_external_ai_config()
+
+    headers = {
+        "Authorization": f"Bearer {Config.EXTERNAL_AI_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": Config.EXTERNAL_AI_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a medical risk assessment AI. Return ONLY valid JSON, no markdown, no explanations.",
+            },
+            {"role": "user", "content": _build_prompt(profile_type, data)},
+        ],
+        "temperature": 0.3,
+        "max_tokens": 1000,
+    }
+
+    try:
         async with httpx.AsyncClient(timeout=Config.EXTERNAL_AI_TIMEOUT) as client:
             response = await client.post(
                 Config.EXTERNAL_AI_API_URL,
@@ -107,20 +207,18 @@ async def call_external_ai_api(profile_type: str, data: dict) -> dict | None:
             )
             response.raise_for_status()
             body = response.json()
+    except httpx.HTTPError as exc:
+        raise AnalysisUnavailableError(f"AI provider request failed: {str(exc)}") from exc
+    except ValueError as exc:
+        raise AnalysisUnavailableError("AI provider returned invalid JSON body.") from exc
 
-        ai_content = body["choices"][0]["message"]["content"]
-        ai_result = json.loads(ai_content)
-        if not isinstance(ai_result, dict):
-            raise ValueError("AI response content is not a JSON object")
-
-        logger.info("External AI API call successful")
-        return ai_result
-    except Exception as e:
-        logger.warning(f"External AI API call failed: {str(e)}")
-        return None
+    content_text = _extract_text_from_provider_response(body)
+    ai_result = _parse_json_text(content_text)
+    logger.info("External AI API call successful")
+    return ai_result
 
 
-def _build_analysis_response(profile_type: str, ai_result: dict) -> AnalysisResponse:
+def _build_analysis_response(profile_type: Literal["adult", "pregnant"], ai_result: dict) -> AnalysisResponse:
     raw_score = ai_result.get("risk_score", 50)
     try:
         risk_score = int(raw_score)
@@ -128,12 +226,13 @@ def _build_analysis_response(profile_type: str, ai_result: dict) -> AnalysisResp
         risk_score = 50
     risk_score = max(0, min(risk_score, 100))
 
-    detected_risks = []
+    detected_risks: list[RiskCard] = []
     for risk in ai_result.get("detected_risks", []):
-        try:
-            detected_risks.append(RiskCard(**risk))
-        except Exception:
-            continue
+        if isinstance(risk, dict):
+            try:
+                detected_risks.append(RiskCard(**risk))
+            except Exception:
+                continue
 
     recommendations = ai_result.get("recommendations", [])
     if not isinstance(recommendations, list):
@@ -144,7 +243,7 @@ def _build_analysis_response(profile_type: str, ai_result: dict) -> AnalysisResp
         risk_level=get_risk_level_from_score(risk_score),
         detected_risks=detected_risks,
         recommendations=recommendations,
-        profile_type=profile_type,  # type: ignore
+        profile_type=profile_type,
         analysis_mode="advanced",
         message="AI-powered analysis completed",
     )
@@ -153,14 +252,10 @@ def _build_analysis_response(profile_type: str, ai_result: dict) -> AnalysisResp
 async def analyze_adult_risk(data: AdultInput) -> AnalysisResponse:
     """Analyze adult health risks using external AI only."""
     ai_result = await call_external_ai_api("adult", data.model_dump())
-    if not ai_result:
-        raise RuntimeError("External AI analysis unavailable for adult profile")
     return _build_analysis_response("adult", ai_result)
 
 
 async def analyze_pregnant_risk(data: PregnantInput) -> AnalysisResponse:
     """Analyze pregnant health risks using external AI only."""
     ai_result = await call_external_ai_api("pregnant", data.model_dump())
-    if not ai_result:
-        raise RuntimeError("External AI analysis unavailable for pregnant profile")
     return _build_analysis_response("pregnant", ai_result)
