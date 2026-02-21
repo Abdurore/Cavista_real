@@ -137,6 +137,3 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         "message": detail.get("message", str(exc.detail))
     }
     return JSONResponse(status_code=exc.status_code, content=payload)
-
-# ============== RUN COMMAND ==============
-# Run with: uvicorn main:app --reload --host 0.0.0.0 --port 8000
