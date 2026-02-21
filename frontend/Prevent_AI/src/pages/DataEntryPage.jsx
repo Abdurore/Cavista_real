@@ -89,7 +89,7 @@ function DataEntryPage() {
       <h1>Data Entry</h1>
       <p className="page-intro">
         Enter required fields for {assessmentLabel} and generate an AI prevention report from
-        Grok.
+        Hugging Face.
       </p>
 
       <div className="action-row">
