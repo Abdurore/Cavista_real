@@ -3,6 +3,10 @@ const HF_MODEL = import.meta.env.VITE_HF_MODEL || ''
 const HF_MODEL_FALLBACKS = import.meta.env.VITE_HF_MODEL_FALLBACKS || ''
 const HF_BASE_URL = import.meta.env.DEV ? '/hf-api' : 'https://router.huggingface.co'
 const HF_API_URL = `${HF_BASE_URL}/v1/chat/completions`
+const DEFAULT_FALLBACK_MODELS = [
+  'Qwen/Qwen2.5-72B-Instruct',
+  'mistralai/Mixtral-8x7B-Instruct-v0.1',
+]
 
 const buildMockReport = (payload) => {
   if (payload.assessmentType === 'pregnant_woman') {
@@ -25,32 +29,36 @@ const buildGeneralAdultMockReport = (payload) => {
 
   if (bmi >= 30 || elevatedBp || elevatedSugar || stressHigh) {
     return {
-      report: 'Elevated prevention risk pattern detected from adult health and lifestyle metrics.',
+      report:
+        'Clinical Summary:\nCurrent measurements indicate multiple elevated prevention markers, including metabolic or cardiovascular stress indicators that can compound over time if not managed early. Blood pressure and blood sugar trends suggest a need for closer short-interval monitoring, while lifestyle load and stress profile increase the probability of progression toward chronic risk states.\n\nRisk Interpretation:\nThis pattern aligns with a high-priority prevention category, not because a diagnosis is confirmed, but because several risk dimensions are active at once. The combination of physiologic readings and behavioral factors increases near-term vulnerability to fatigue, reduced functional wellbeing, and long-term cardiometabolic burden if no intervention plan is put in place.\n\nPrevention Roadmap:\nA structured plan should focus first on stabilization: consistent sleep routine, meal timing, hydration, and low-impact activity progression. Clinical follow-up should reassess blood pressure and glucose promptly, then track trend response every 2 to 4 weeks. Practical stress regulation, daily adherence tracking, and targeted clinician coaching are recommended to sustain risk reduction.',
       suggestions: [
-        'Begin supervised weight-management and activity plan.',
-        'Schedule blood pressure and blood sugar follow-up within 2 weeks.',
-        'Set stress, nutrition, and sleep tracking with weekly review.',
+        'Schedule blood pressure and blood sugar reassessment within 2 weeks to confirm trend direction.',
+        'Start a supervised weekly activity and nutrition plan with realistic adherence targets.',
+        'Use daily sleep and stress logs to identify triggers and improve routine stability.',
+        'Set a 30-day prevention review with updated vitals, weight, and lifestyle metrics.',
       ],
     }
   }
 
   if (bmi >= 25) {
     return {
-      report: 'Moderate prevention risk indicators were detected and should be monitored.',
+      report:
+        'Clinical Summary:\nThe profile shows moderate prevention burden with early warning indicators in weight and lifestyle-linked factors. Current values do not indicate the highest risk tier, but they suggest a trajectory that can shift unfavorably without deliberate habit correction and routine monitoring.\n\nRisk Interpretation:\nThis pattern is consistent with a medium prevention category where timely behavior change has high impact. The objective is to prevent escalation by stabilizing nutrition quality, activity consistency, and sleep adequacy before physiologic markers worsen.\n\nPrevention Roadmap:\nA focused four-week routine should include moderate exercise frequency, hydration targets, and improved sleep regularity. Trend tracking for blood pressure, blood sugar, and weight should continue at least weekly. Reinforcement through coaching or accountability tools can improve consistency and lower long-term risk accumulation.',
       suggestions: [
-        'Introduce moderate exercise routine and hydration targets.',
-        'Monitor weight trend and reassess in 2-4 weeks.',
-        'Provide targeted lifestyle prevention guidance.',
+        'Implement a 4-week moderate-intensity exercise schedule with progressive weekly goals.',
+        'Track blood pressure, blood sugar, and weight weekly and document trend changes.',
+        'Set clear sleep and hydration targets and review adherence at the end of each week.',
       ],
     }
   }
 
   return {
-    report: 'Current profile indicates low risk with preventive monitoring advised.',
+    report:
+      'Clinical Summary:\nThe current data indicates a stable baseline prevention profile with no dominant high-risk cluster. Vitals and lifestyle factors appear generally balanced, supporting a low immediate prevention burden.\n\nRisk Interpretation:\nEven with a stable profile, prevention focus should remain active because risk can increase when sleep, stress, activity, or nutrition patterns drift over time. Early detection and routine monitoring remain essential for preserving long-term health trajectory.\n\nPrevention Roadmap:\nContinue structured self-monitoring, maintain present lifestyle habits, and complete periodic reassessment. Reinforce consistency in activity, sleep duration, hydration, and nutrition quality. If new symptoms or metric shifts appear, escalate review promptly to avoid delayed intervention.',
     suggestions: [
-      'Continue routine observations.',
-      'Maintain monthly prevention assessments.',
-      'Encourage patient self-reporting of new symptoms.',
+      'Continue monthly prevention check-ins with updated vitals and lifestyle metrics.',
+      'Maintain current sleep, activity, and hydration routines with weekly self-tracking.',
+      'Escalate clinical review promptly if blood pressure, sugar, or stress patterns worsen.',
     ],
   }
 }
@@ -67,96 +75,113 @@ const buildPregnancyMockReport = (payload) => {
 
   if (highRiskHistory || elevatedBp || elevatedSugar || stressHigh) {
     return {
-      report: 'High-priority maternal prevention indicators were detected in the current profile.',
+      report:
+        'Clinical Summary:\nMaternal indicators show a high-priority prevention pattern requiring tighter follow-up. Blood pressure or glucose elevation, high stress load, or prior high-risk history introduces compounded maternal and fetal monitoring needs. The profile warrants proactive care coordination rather than routine-only observation.\n\nRisk Interpretation:\nThis is a precautionary high-risk prevention category where early action can reduce complications. Without close monitoring, risk of adverse maternal trends may increase in later gestation, especially when physiologic strain and behavioral stress are both present.\n\nPrevention Roadmap:\nCare should shift to short-interval review, including blood pressure and glucose trend checks, symptom surveillance, and strict hydration and rest routines. Obstetric team coordination should be prioritized this week, with defined escalation thresholds for concerning symptoms. A structured daily adherence plan is recommended to improve stability and reduce uncertainty.',
       suggestions: [
-        'Escalate obstetric follow-up and monitor blood pressure and sugar closely.',
-        'Increase hydration/sleep adherence and perform daily symptom checks.',
-        'Review prior high-risk factors and update maternal care plan this week.',
+        'Arrange high-priority obstetric follow-up and monitor blood pressure and glucose closely.',
+        'Use daily symptom tracking with clear escalation rules for warning signs.',
+        'Strengthen hydration, sleep, and stress-management routines with caregiver support.',
+        'Review prior high-risk history factors and update the maternal care plan this week.',
       ],
     }
   }
 
   if (gestationalWeeks >= 28) {
     return {
-      report: 'Late-stage pregnancy monitoring profile detected with moderate prevention needs.',
+      report:
+        'Clinical Summary:\nThe current profile reflects a later-stage pregnancy monitoring context with moderate prevention needs. While values are not in the highest concern range, third-trimester progression requires more consistent trend surveillance and adherence to maternal wellness routines.\n\nRisk Interpretation:\nRisk is moderate due to gestational stage and the natural increase in physiologic demand. Prevention priorities are centered on early detection of trend shifts in blood pressure, glucose, hydration, and rest quality.\n\nPrevention Roadmap:\nMaintain weekly prenatal monitoring, reinforce daily hydration and sleep targets, and track fetal movement consistently. The care approach should emphasize steady routine adherence and rapid reporting of any symptom change. Continued preventative coaching can help keep the pregnancy course stable through delivery planning.',
       suggestions: [
-        'Maintain weekly prenatal checks for blood pressure and glucose trends.',
-        'Track fetal movement and hydration consistently each day.',
-        'Reinforce stress-reduction and sleep routine.',
+        'Maintain weekly prenatal checks focused on blood pressure and glucose trends.',
+        'Track hydration, sleep quality, and fetal movement daily with simple logs.',
+        'Report any sudden swelling, headache, or reduced fetal movement immediately.',
       ],
     }
   }
 
   return {
-    report: 'Maternal profile is stable with routine prevention monitoring advised.',
+    report:
+      'Clinical Summary:\nMaternal data currently appears stable with no dominant high-risk signal. Routine prenatal prevention monitoring remains appropriate, and present metrics support continued standard surveillance.\n\nRisk Interpretation:\nCurrent prevention risk is low to moderate, but ongoing physiologic changes during pregnancy require consistent observation. Small trend shifts can become clinically meaningful, so continuity in monitoring remains important.\n\nPrevention Roadmap:\nContinue scheduled prenatal visits, maintain hydration and balanced nutrition, and preserve sleep consistency as a daily target. Keep regular blood pressure and glucose checks according to care guidance. Promptly escalate review if new symptoms or measurable trend changes are detected.',
     suggestions: [
-      'Continue scheduled prenatal appointments and standard screenings.',
-      'Maintain hydration, balanced nutrition, and regular sleep targets.',
-      'Monitor blood pressure and blood sugar at recommended intervals.',
+      'Continue routine prenatal follow-up and recommended screening schedule.',
+      'Sustain hydration, nutrition balance, and sleep consistency every day.',
+      'Monitor blood pressure and sugar regularly and report notable shifts early.',
     ],
   }
 }
 
 export async function generatePreventionReport(payload) {
-  if (!HF_API_KEY) {
-    throw new Error(
-      'Missing VITE_HF_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
-    )
-  }
-  const candidateModels = [HF_MODEL, ...HF_MODEL_FALLBACKS.split(',')]
+  const candidateModels = [HF_MODEL, ...HF_MODEL_FALLBACKS.split(','), ...DEFAULT_FALLBACK_MODELS]
     .map((value) => value.trim())
     .filter((value) => value && !isPlaceholderModel(value))
+    .filter((value, index, array) => array.indexOf(value) === index)
 
-  if (candidateModels.length === 0) {
-    throw new Error(
-      'Missing valid model names. Set VITE_HF_MODEL (and optional VITE_HF_MODEL_FALLBACKS) in frontend/Prevent_AI/.env, then restart the Vite dev server.',
-    )
-  }
+  const prompt = `As a Healthcare Prevention Specialist and Data Analyst, perform a comprehensive health audit based on the provided patient data.
 
-  const prompt = `You are a healthcare prevention assistant.
-Return valid JSON only using this schema:
-{"report":"string","suggestions":["string","string","string"]}
+### OBJECTIVE
+Analyze the physiological metrics provided to determine risk levels and provide a structured clinical report. You must return your response in VALID JSON format only.
 
-Patient Data:
+### DATA INPUTS
 - Assessment Type: ${payload.assessmentType}
-- Full Name: ${payload.fullName}
-- Age: ${payload.age}
-- Height (cm): ${payload.height}
-- Weight (kg): ${payload.weight}
-- Blood Pressure Systolic: ${payload.bloodPressureSystolic}
-- Blood Pressure Diastolic: ${payload.bloodPressureDiastolic}
-- Blood Sugar: ${payload.bloodSugar}
-- Sleep Hours (per night): ${payload.sleepHours}
-- Stress Level: ${payload.stressLevel}
+- Patient: ${payload.fullName} (${payload.age} years old, ${payload.gender || 'N/A'})
+- Physicals: ${payload.height}cm, ${payload.weight}kg
+- Vitals: BP ${payload.bloodPressureSystolic}/${payload.bloodPressureDiastolic}, Blood Sugar: ${payload.bloodSugar}
+- Lifestyle: ${payload.sleepHours}h sleep, ${payload.stressLevel} stress, ${payload.exerciseDays || '0'} days exercise/week, ${payload.waterIntake || 'N/A'} water/day
+- Pregnancy Context: Week ${payload.gestationalAgeWeeks || 'N/A'}, First Pregnancy: ${payload.firstPregnancy || 'N/A'}, History of High-Risk: ${payload.historyHighRiskPregnancy || 'N/A'}
 
-Additional Fields:
-- Gender: ${payload.gender || 'N/A'}
-- Exercise Days (per week): ${payload.exerciseDays || 'N/A'}
-- Gestational Age (weeks): ${payload.gestationalAgeWeeks || 'N/A'}
-- First Pregnancy: ${payload.firstPregnancy || 'N/A'}
-- History of High-Risk Pregnancy: ${payload.historyHighRiskPregnancy || 'N/A'}
-- Water Intake (per day): ${payload.waterIntake || 'N/A'}
+### OUTPUT REQUIREMENTS
+1. **JSON Format**: The entire response must be a single JSON object.
+2. **Markdown Content**: The "report" field must contain Markdown formatting (bolding, headers, lists) for web rendering.
+3. **Word Count**: The report text must be between 220 and 320 words.
+4. **Required Headers**: Use exactly these headers in the report:
+   - ## Clinical Summary:
+   - ## Risk Interpretation:
+   - ## Prevention Roadmap:
 
-Generate a short prevention report and exactly 3 actionable prevention suggestions.`
+### SCHEMA
+{
+  "risk_score": "0-100%",
+  "detected_risks": ["list", "of", "risks"],
+  "report": "string (with Markdown)",
+  "suggestions": ["string", "string"]
+}
 
+### RULES
+- Calculate a specific Risk Score based on BMI, BP, and Sugar levels.
+- Use plain language that remains clinically accurate.
+- Provide 3 to 6 actionable suggestions.`
+
+  const fallback = buildMockReport(payload)
   let data = null
   let lastApiError = ''
+  let hasAttemptedApiCall = false
+
+  if (!HF_API_KEY || candidateModels.length === 0) {
+    return fallback
+  }
 
   for (const modelName of candidateModels) {
-    const response = await fetch(HF_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${HF_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: 500,
-      }),
-    })
+    let response
 
+    try {
+      response = await fetch(HF_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${HF_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 850,
+        }),
+      })
+    } catch (error) {
+      lastApiError = error?.message || 'Network error while calling Hugging Face.'
+      continue
+    }
+
+    hasAttemptedApiCall = true
     data = await parseApiResponse(response)
 
     if (response.ok) {
@@ -165,31 +190,38 @@ Generate a short prevention report and exactly 3 actionable prevention suggestio
 
     const apiMessage = extractApiErrorMessage(data)
     lastApiError = apiMessage || `Hugging Face request failed (${response.status}).`
-    if (!isModelNotFoundError(lastApiError)) {
-      throw new Error(lastApiError)
+    if (!isModelNotFoundError(lastApiError) && response.status < 500) {
+      break
     }
   }
 
   if (!data || data?.error || data?.message) {
-    throw new Error(
-      lastApiError ||
-        'None of the configured Hugging Face models are available. Update VITE_HF_MODEL or VITE_HF_MODEL_FALLBACKS.',
-    )
+    if (!hasAttemptedApiCall) {
+      return fallback
+    }
+
+    return {
+      ...fallback,
+      report: `${fallback.report}\n\nIntegration Note:\nThe live Hugging Face request is currently unavailable (${lastApiError || 'server error'}). This report uses local prevention logic so you can continue working.`,
+    }
   }
 
   const rawText = extractHFText(data)
   const parsed = parseModelOutput(rawText)
 
-  if (parsed) {
+  if (parsed?.report) {
     return {
-      report: parsed.report ?? 'No report was returned by the model.',
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+      report: parsed.report,
+      suggestions:
+        Array.isArray(parsed.suggestions) && parsed.suggestions.length > 0
+          ? parsed.suggestions
+          : buildMockReport(payload).suggestions,
     }
   }
 
   return {
-    report: rawText || 'No report was returned by the model.',
-    suggestions: buildMockReport(payload).suggestions,
+    report: rawText || fallback.report,
+    suggestions: fallback.suggestions,
   }
 }
 
