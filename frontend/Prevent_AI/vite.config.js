@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/hf-api': {
-        target: 'https://api-inference.huggingface.co',
+      '/gemini-api': {
+        target: 'https://generativelanguage.googleapis.com',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/hf-api/, ''),
+        rewrite: (path) => path.replace(/^\/gemini-api/, ''),
       },
     },
   },

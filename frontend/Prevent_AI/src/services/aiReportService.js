@@ -1,8 +1,9 @@
-const HF_API_KEY = import.meta.env.VITE_HF_API_KEY
-const HF_MODEL = import.meta.env.VITE_HF_MODEL || 'google/flan-t5-large'
-const HF_API_URL = import.meta.env.DEV
-  ? `/hf-api/hf-inference/models/${HF_MODEL}`
-  : `https://router.huggingface.co/hf-inference/models/${HF_MODEL}`
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
+const GEMINI_BASE_URL = import.meta.env.DEV
+  ? '/gemini-api'
+  : 'https://generativelanguage.googleapis.com'
+const GEMINI_API_URL = `${GEMINI_BASE_URL}/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 const buildMockReport = (payload) => {
   const riskLevel = payload.riskLevel?.toLowerCase() ?? 'low'
@@ -40,17 +41,14 @@ const buildMockReport = (payload) => {
 }
 
 export async function generatePreventionReport(payload) {
-  if (!HF_API_KEY) {
+  if (!GEMINI_API_KEY) {
     throw new Error(
-      'Missing VITE_HF_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
+      'Missing VITE_GEMINI_API_KEY. Add it to frontend/Prevent_AI/.env and restart the Vite dev server.',
     )
   }
 
   const prompt = `You are a healthcare prevention assistant.
-Use this patient information to generate:
-1) a short risk/prevention report
-2) exactly 3 actionable prevention suggestions
-Return valid JSON only with this schema:
+Return valid JSON only using this schema:
 {"report":"string","suggestions":["string","string","string"]}
 
 Patient Data:
@@ -61,24 +59,20 @@ Patient Data:
 - Gender: ${payload.gender}
 - Risk Level: ${payload.riskLevel}
 - Notes: ${payload.notes || 'None'}
-`
 
-  const response = await fetch(HF_API_URL, {
+Generate a short prevention report and exactly 3 actionable prevention suggestions.`
+
+  const response = await fetch(`${GEMINI_API_URL}?key=${encodeURIComponent(GEMINI_API_KEY)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${HF_API_KEY}`,
     },
     body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        max_new_tokens: 350,
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
         temperature: 0.3,
-        return_full_text: false,
-      },
-      options: {
-        wait_for_model: true,
-        use_cache: false,
+        maxOutputTokens: 500,
+        responseMimeType: 'application/json',
       },
     }),
   })
@@ -88,15 +82,16 @@ Patient Data:
   if (!response.ok) {
     const apiMessage = extractApiErrorMessage(data)
     throw new Error(
-      apiMessage || `Hugging Face request failed (${response.status}). Check model access and API key.`,
+      apiMessage ||
+        `Gemini request failed (${response.status}). Check VITE_GEMINI_MODEL, API key, and billing/quota.`,
     )
   }
 
-  if (data?.error) {
-    throw new Error(data.error)
+  if (data?.error || data?.message) {
+    throw new Error(data.error?.message || data.error || data.message)
   }
 
-  const rawText = extractModelText(data)
+  const rawText = extractGeminiText(data)
   const parsed = parseModelOutput(rawText)
 
   if (parsed) {
@@ -136,36 +131,27 @@ function extractApiErrorMessage(data) {
     return data.error
   }
 
+  if (data.error?.message && typeof data.error.message === 'string') {
+    return data.error.message
+  }
+
   if (Array.isArray(data) && data[0]?.error) {
     return data[0].error
   }
 
-  return ''
+  if (data.message && typeof data.message === 'string') {
+    return data.message
+  }
+
+  try {
+    return JSON.stringify(data)
+  } catch {
+    return ''
+  }
 }
 
-function extractModelText(data) {
-  if (typeof data === 'string') {
-    return data
-  }
-
-  if (Array.isArray(data)) {
-    const firstItem = data[0]
-    if (typeof firstItem === 'string') {
-      return firstItem
-    }
-    if (firstItem?.generated_text) {
-      return firstItem.generated_text
-    }
-    if (firstItem?.summary_text) {
-      return firstItem.summary_text
-    }
-  }
-
-  if (data?.generated_text) {
-    return data.generated_text
-  }
-
-  return ''
+function extractGeminiText(data) {
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
 }
 
 function parseModelOutput(text) {
