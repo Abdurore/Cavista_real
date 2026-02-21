@@ -4,26 +4,28 @@ const GROK_BASE_URL = import.meta.env.DEV ? '/grok-api' : 'https://api.x.ai'
 const GROK_API_URL = `${GROK_BASE_URL}/v1/chat/completions`
 
 const buildMockReport = (payload) => {
-  const riskLevel = payload.riskLevel?.toLowerCase() ?? 'low'
+  const heightCm = Number(payload.height)
+  const weightKg = Number(payload.weight)
+  const bmi = heightCm > 0 ? weightKg / (heightCm / 100) ** 2 : 0
 
-  if (riskLevel === 'high') {
+  if (bmi >= 30) {
     return {
-      report: 'High-risk pattern detected from submitted clinical profile and notes.',
+      report: 'Elevated prevention risk pattern detected from user anthropometric profile.',
       suggestions: [
-        'Schedule immediate clinician follow-up within 24 hours.',
-        'Start daily symptom tracking and alert escalation.',
-        'Perform medication and adherence review.',
+        'Begin supervised weight-management and activity plan.',
+        'Schedule metabolic screening and monthly follow-up.',
+        'Set nutrition and sleep tracking with weekly review.',
       ],
     }
   }
 
-  if (riskLevel === 'medium') {
+  if (bmi >= 25) {
     return {
-      report: 'Moderate risk indicators were found and require close monitoring.',
+      report: 'Moderate prevention risk indicators were detected and should be monitored.',
       suggestions: [
-        'Run a weekly check-in with care staff.',
-        'Track progression markers and update plan in 7 days.',
-        'Provide targeted prevention education.',
+        'Introduce moderate exercise routine and hydration targets.',
+        'Monitor weight trend and reassess in 2-4 weeks.',
+        'Provide targeted lifestyle prevention education.',
       ],
     }
   }
@@ -50,13 +52,11 @@ Return valid JSON only using this schema:
 {"report":"string","suggestions":["string","string","string"]}
 
 Patient Data:
-- Patient ID: ${payload.patientId}
 - Full Name: ${payload.fullName}
+- Height (cm): ${payload.height}
+- Weight (kg): ${payload.weight}
 - Age: ${payload.age}
-- Visit Date: ${payload.visitDate}
 - Gender: ${payload.gender}
-- Risk Level: ${payload.riskLevel}
-- Notes: ${payload.notes || 'None'}
 
 Generate a short prevention report and exactly 3 actionable prevention suggestions.`
 
