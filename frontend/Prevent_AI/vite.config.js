@@ -6,11 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/grok-api': {
-        target: 'https://api.x.ai',
+      '/hf-api': {
+        target: 'https://router.huggingface.co',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/grok-api/, ''),
+        rewrite: (path) => path.replace(/^\/hf-api/, ''),
       },
     },
   },
