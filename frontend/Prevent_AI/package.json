@@ -7,8 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "xai:models": "powershell -ExecutionPolicy Bypass -File ./scripts/list-xai-models.ps1"
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.0",
