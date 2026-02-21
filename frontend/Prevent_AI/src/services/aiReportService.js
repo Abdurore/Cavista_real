@@ -9,11 +9,80 @@ const DEFAULT_FALLBACK_MODELS = [
 ]
 
 const buildMockReport = (payload) => {
-  if (payload.assessmentType === 'pregnant_woman') {
-    return buildPregnancyMockReport(payload)
+  const baseReport =
+    payload.assessmentType === 'pregnant_woman'
+      ? buildPregnancyMockReport(payload)
+      : buildGeneralAdultMockReport(payload)
+  const { riskScore, detectedRisks } = buildRiskInsights(payload)
+
+  return {
+    ...baseReport,
+    riskScore,
+    detectedRisks,
+  }
+}
+
+function buildRiskInsights(payload) {
+  const risks = []
+  const heightCm = Number(payload.height)
+  const weightKg = Number(payload.weight)
+  const bmi = heightCm > 0 ? weightKg / (heightCm / 100) ** 2 : 0
+  const systolic = Number(payload.bloodPressureSystolic)
+  const diastolic = Number(payload.bloodPressureDiastolic)
+  const bloodSugar = Number(payload.bloodSugar)
+  const stressLevel = String(payload.stressLevel || '').toLowerCase()
+
+  let score = 15
+
+  if (bmi >= 30) {
+    score += 20
+    risks.push('Elevated BMI profile')
+  } else if (bmi >= 25) {
+    score += 12
+    risks.push('Overweight range')
   }
 
-  return buildGeneralAdultMockReport(payload)
+  if (systolic >= 140 || diastolic >= 90) {
+    score += 25
+    risks.push('High blood pressure trend')
+  } else if (systolic >= 130 || diastolic >= 85) {
+    score += 12
+    risks.push('Borderline blood pressure')
+  }
+
+  if (bloodSugar >= 126) {
+    score += 25
+    risks.push('High blood sugar trend')
+  } else if (bloodSugar >= 100) {
+    score += 12
+    risks.push('Borderline blood sugar')
+  }
+
+  if (stressLevel === 'high') {
+    score += 12
+    risks.push('High stress load')
+  } else if (stressLevel === 'medium') {
+    score += 6
+  }
+
+  if (payload.assessmentType === 'pregnant_woman') {
+    if (payload.historyHighRiskPregnancy === 'yes') {
+      score += 14
+      risks.push('History of high-risk pregnancy')
+    }
+
+    const gestationalWeeks = Number(payload.gestationalAgeWeeks)
+    if (gestationalWeeks >= 28) {
+      score += 6
+      risks.push('Late-stage pregnancy monitoring needs')
+    }
+  }
+
+  const clampedScore = Math.max(5, Math.min(Math.round(score), 98))
+  return {
+    riskScore: `${clampedScore}%`,
+    detectedRisks: risks.length > 0 ? risks : ['No dominant high-risk marker detected'],
+  }
 }
 
 const buildGeneralAdultMockReport = (payload) => {
@@ -189,7 +258,8 @@ Analyze the physiological metrics provided to determine risk levels and provide 
     }
 
     const apiMessage = extractApiErrorMessage(data)
-    lastApiError = apiMessage || `Hugging Face request failed (${response.status}).`
+    lastApiError =
+      apiMessage || `Hugging Face request failed (${response.status} ${response.statusText}).`
     if (!isModelNotFoundError(lastApiError) && response.status < 500) {
       break
     }
@@ -210,8 +280,16 @@ Analyze the physiological metrics provided to determine risk levels and provide 
   const parsed = parseModelOutput(rawText)
 
   if (parsed?.report) {
+    const modelDetectedRisks = Array.isArray(parsed.detected_risks)
+      ? parsed.detected_risks
+      : Array.isArray(parsed.detectedRisks)
+        ? parsed.detectedRisks
+        : fallback.detectedRisks
+
     return {
       report: parsed.report,
+      riskScore: parsed.risk_score || parsed.riskScore || fallback.riskScore,
+      detectedRisks: modelDetectedRisks,
       suggestions:
         Array.isArray(parsed.suggestions) && parsed.suggestions.length > 0
           ? parsed.suggestions
@@ -220,8 +298,8 @@ Analyze the physiological metrics provided to determine risk levels and provide 
   }
 
   return {
+    ...fallback,
     report: rawText || fallback.report,
-    suggestions: fallback.suggestions,
   }
 }
 
