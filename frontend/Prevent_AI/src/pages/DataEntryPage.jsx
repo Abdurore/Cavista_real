@@ -48,7 +48,9 @@ function DataEntryPage() {
   return (
     <section className="page">
       <h1>Data Entry</h1>
-      <p className="page-intro">Use this placeholder form to collect structured input.</p>
+      <p className="page-intro">
+        Enter user data and generate an AI prevention report from Hugging Face.
+      </p>
 
       <form className="data-form" onSubmit={handleSubmit}>
         <label htmlFor="patientId">Patient ID</label>
