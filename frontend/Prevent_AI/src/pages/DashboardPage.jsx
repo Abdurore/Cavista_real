@@ -16,6 +16,8 @@ const queueItems = [
 function DashboardPage() {
   const location = useLocation()
   const profile = location.state?.profile ?? 'User'
+  const patientInput = location.state?.patientInput
+  const generatedReport = location.state?.generatedReport
 
   return (
     <section className="page">
@@ -55,6 +57,33 @@ function DashboardPage() {
             <li>Connect `/cases/priority` to queue list.</li>
             <li>Connect `/alerts/recent` to notification panel.</li>
           </ul>
+        </article>
+
+        <article className="panel">
+          <h2>AI Report Output</h2>
+          {!generatedReport && (
+            <p className="empty-state">
+              No AI report yet. Open <Link to="/data-entry">Data Entry</Link> to submit user
+              information and generate one.
+            </p>
+          )}
+
+          {generatedReport && (
+            <div className="report-shell">
+              <p>
+                <strong>Patient:</strong> {patientInput?.fullName || patientInput?.patientId}
+              </p>
+              <p>
+                <strong>Report:</strong> {generatedReport.report}
+              </p>
+              <h3>Prevention Suggestions</h3>
+              <ul className="hook-list">
+                {generatedReport.suggestions.map((suggestion) => (
+                  <li key={suggestion}>{suggestion}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </article>
       </section>
     </section>
