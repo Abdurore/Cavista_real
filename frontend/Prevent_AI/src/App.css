@@ -95,6 +95,11 @@
   color: #ffffff;
 }
 
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .btn-secondary {
   background: #ffffff;
   color: #0f4fd8;
@@ -251,4 +256,25 @@
   border-left: 3px solid #7fa5ef;
   padding-left: 0.55rem;
   color: #334968;
+}
+
+.form-error {
+  margin: 0;
+  color: #b22222;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  color: #4a5d7e;
+}
+
+.report-shell p {
+  margin: 0.4rem 0;
+  color: #263c5f;
+}
+
+.report-shell h3 {
+  margin: 0.8rem 0 0.45rem;
+  color: #10294f;
+  font-size: 0.95rem;
 }
