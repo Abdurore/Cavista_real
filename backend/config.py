@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()  # Load .env file
+# Always load backend/.env regardless of current working directory.
+_BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(_BASE_DIR / ".env")
 
 
 class Config:

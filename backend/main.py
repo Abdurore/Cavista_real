@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 try:
@@ -47,6 +48,7 @@ def health_check():
     response_model=AnalysisResponse,
     responses={
         400: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
         503: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
     },
@@ -90,6 +92,7 @@ async def analyze_adult(data: AdultInput):
     response_model=AnalysisResponse,
     responses={
         400: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
         503: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
     },
@@ -137,3 +140,23 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         "message": detail.get("message", str(exc.detail))
     }
     return JSONResponse(status_code=exc.status_code, content=payload)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    field = None
+    message = "Invalid request payload."
+    if errors:
+        first_error = errors[0]
+        loc = first_error.get("loc", [])
+        field_parts = [str(part) for part in loc if part != "body"]
+        field = ".".join(field_parts) if field_parts else None
+        message = first_error.get("msg", message)
+
+    payload = ErrorResponse(
+        error="validation_error",
+        field=field,
+        message=message,
+    )
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=payload.model_dump())
