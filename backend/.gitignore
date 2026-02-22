@@ -1,0 +1,25 @@
+# Env
+.env
+.env.*
+!.env.fastapi.example
+
+# Python cache and build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
