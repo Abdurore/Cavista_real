@@ -1,0 +1,261 @@
+.device-sim-page {
+  min-height: 100vh;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(187, 36, 62, 0.18), transparent 35%),
+    radial-gradient(circle at 90% 70%, rgba(16, 185, 129, 0.16), transparent 40%),
+    linear-gradient(160deg, #f8fafc 0%, #eef2ff 100%);
+  font-family: 'Inter', sans-serif;
+  color: #0f172a;
+}
+
+.device-sim-back {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.device-sim-panel {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 26px;
+  align-items: center;
+}
+
+.device-sim-watch-wrap {
+  display: flex;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+.watch-3d {
+  width: 220px;
+  transform-style: preserve-3d;
+  animation: watchFloat 3.2s ease-in-out infinite;
+}
+
+.watch-strap {
+  width: 100px;
+  height: 90px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-radius: 22px;
+}
+
+.watch-strap.top {
+  margin-bottom: -14px;
+}
+
+.watch-strap.bottom {
+  margin-top: -14px;
+}
+
+.watch-body {
+  width: 220px;
+  height: 220px;
+  border-radius: 46px;
+  background: linear-gradient(145deg, #334155 0%, #0f172a 100%);
+  padding: 16px;
+  box-shadow:
+    0 22px 40px rgba(15, 23, 42, 0.25),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.1);
+  transform: rotateX(12deg) rotateY(-12deg);
+}
+
+.watch-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 34px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #020617 0%, #111827 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.watch-screen-glow {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35), transparent 60%);
+  filter: blur(6px);
+  animation: glowPulse 2.4s ease-in-out infinite;
+}
+
+.watch-heart-line {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #10b981, #22d3ee, transparent);
+  animation: lineMove 2.2s linear infinite;
+}
+
+.watch-reading {
+  position: relative;
+  z-index: 2;
+  color: #f8fafc;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.device-sim-status h1 {
+  font-size: 34px;
+  margin: 0 0 10px;
+}
+
+.device-sim-sub {
+  margin: 0 0 16px;
+  color: #475569;
+  min-height: 24px;
+}
+
+.device-progress-track {
+  width: 100%;
+  height: 12px;
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.device-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #bb243e, #f43f5e);
+  border-radius: 999px;
+  transition: width 0.18s linear;
+}
+
+.device-step-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.device-step {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.device-step.active {
+  color: #1e293b;
+}
+
+.device-step .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.device-step.active .dot {
+  background: #bb243e;
+}
+
+.device-sim-data-card {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(203, 213, 225, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.device-sim-data-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.placeholder {
+  margin: 0;
+  color: #64748b;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.data-pill {
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  display: grid;
+  gap: 3px;
+}
+
+.data-pill .label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.data-pill .value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.device-error {
+  margin-top: 12px;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+@keyframes watchFloat {
+  0%, 100% {
+    transform: translateY(0) rotateZ(0deg);
+  }
+  50% {
+    transform: translateY(-7px) rotateZ(1.2deg);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(1.12); }
+}
+
+@keyframes lineMove {
+  0% { transform: translateX(-25%); }
+  100% { transform: translateX(25%); }
+}
+
+@media (max-width: 900px) {
+  .device-sim-page {
+    padding: 18px;
+  }
+
+  .device-sim-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .device-sim-status h1 {
+    font-size: 27px;
+  }
+
+  .watch-3d {
+    width: 180px;
+  }
+
+  .watch-body {
+    width: 180px;
+    height: 180px;
+    border-radius: 36px;
+  }
+
+  .watch-strap {
+    width: 80px;
+    height: 70px;
+  }
+}

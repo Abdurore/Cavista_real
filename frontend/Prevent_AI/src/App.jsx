@@ -1,155 +1,293 @@
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import './App.css'
-import WelcomePage from './components/WelcomePage'
-import ProfileSelection from './components/ProfileSelection'
-import DataInput from './components/DataInput'
-import AdultForm from './components/AdultForm'
-import PregnantForm from './components/PregnantForm'
-import ReportPage from './pages/ReportPage'
-import { generatePreventionReport } from './services/aiReportService'
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import WelcomePage from './components/WelcomePage';
+import ProfileSelection from './components/ProfileSelection';
+import DataInput from './components/DataInput';
+import AdultForm from './components/AdultForm';
+import PregnantForm from './components/PregnantForm';
+import ResultsPage from './components/ResultsPage';
+import DeviceSimulation from './components/DeviceSimulation';
+import { buildApiUrl } from './config/api';
+import './App.css';
+
+const normalizeResult = (result, rawData) => ({
+  riskScore: result.riskScore ?? result.risk_score ?? 0,
+  riskLevel: result.riskLevel ?? result.risk_level ?? 'Unknown',
+  riskFactors: result.riskFactors ?? result.risk_factors ?? ['No specific risks detected'],
+  recommendations: result.recommendations ?? ['Maintain healthy lifestyle'],
+  aiModel: result.aiModel ?? result.ai_model ?? 'ClinicalBERT',
+  analysisSource: result.analysisSource ?? result.analysis_source ?? result.source ?? 'unknown',
+  rawData: rawData || {}
+});
+
+const parseApiResponse = async (response) => {
+  const contentType = response.headers.get('content-type') || '';
+  const bodyText = await response.text();
+
+  let parsed = null;
+  if (contentType.includes('application/json') && bodyText) {
+    try {
+      parsed = JSON.parse(bodyText);
+    } catch {
+      throw new Error(`Invalid JSON response (HTTP ${response.status})`);
+    }
+  }
+
+  if (!response.ok) {
+    const isHtml = bodyText.trim().startsWith('<');
+    const apiMessage = parsed?.message || parsed?.error;
+    const fallback = isHtml
+      ? `Server returned HTML error page (HTTP ${response.status})`
+      : `Request failed (HTTP ${response.status})`;
+    throw new Error(apiMessage || fallback);
+  }
+
+  if (!parsed) {
+    throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'}`);
+  }
+
+  return parsed;
+};
 
 function App() {
+  const [selectedProfile, setSelectedProfile] = useState('');
+
   return (
-    <div className="App">
-      <Routes>
-        <Route path="/" element={<WelcomePageWrapper />} />
-        <Route path="/profile-selection" element={<ProfileSelectionWrapper />} />
-        <Route path="/data-input" element={<DataInputWrapper />} />
-        <Route path="/adult-form" element={<AdultFormWrapper />} />
-        <Route path="/pregnant-form" element={<PregnantFormWrapper />} />
-        <Route path="/report" element={<ReportPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
-  )
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<WelcomePageWrapper />} />
+          <Route 
+            path="/profile-selection" 
+            element={
+              <ProfileSelectionWrapper 
+                setSelectedProfile={setSelectedProfile}
+              />
+            } 
+          />
+          <Route 
+            path="/data-input" 
+            element={
+              <DataInputWrapper 
+                selectedProfile={selectedProfile}
+              />
+            } 
+          />
+          <Route
+            path="/device-sync"
+            element={
+              <DeviceSimulationWrapper
+                selectedProfile={selectedProfile}
+              />
+            }
+          />
+          <Route path="/adult-form" element={<AdultFormWrapper />} />
+          <Route path="/pregnant-form" element={<PregnantFormWrapper />} />
+          <Route path="/results" element={<ResultsPage />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
+// Wrapper components
 function WelcomePageWrapper() {
-  const navigate = useNavigate()
-  return <WelcomePage onContinue={() => navigate('/profile-selection')} />
+  const navigate = useNavigate();
+
+  const handleContinue = () => {
+    navigate('/profile-selection');
+  };
+
+  return <WelcomePage onContinue={handleContinue} />;
 }
 
-function ProfileSelectionWrapper() {
-  const navigate = useNavigate()
+function ProfileSelectionWrapper({ setSelectedProfile }) {
+  const navigate = useNavigate();
+
+  const handleSelectAdult = () => {
+    setSelectedProfile('adult');
+    navigate('/data-input');
+  };
+
+  const handleSelectPregnant = () => {
+    setSelectedProfile('pregnant');
+    navigate('/data-input');
+  };
+
+  const handleBack = () => {
+    navigate('/');
+  };
 
   return (
-    <ProfileSelection
-      onBack={() => navigate('/')}
-      onSelectAdult={() => navigate('/data-input')}
-      onSelectPregnant={() => navigate('/pregnant-form')}
+    <ProfileSelection 
+      onSelectAdult={handleSelectAdult}
+      onSelectPregnant={handleSelectPregnant}
+      onBack={handleBack}
     />
-  )
+  );
 }
 
-function DataInputWrapper() {
-  const navigate = useNavigate()
+function DataInputWrapper({ selectedProfile }) {
+  const navigate = useNavigate();
 
   const handleSelectMethod = (method) => {
     if (method === 'manual') {
-      navigate('/adult-form')
-      return
+      if (selectedProfile === 'adult') {
+        navigate('/adult-form');
+      } else {
+        navigate('/pregnant-form');
+      }
+    } else {
+      navigate('/device-sync');
+    }
+  };
+
+  const handleBack = () => {
+    navigate('/profile-selection');
+  };
+
+  return (
+    <DataInput 
+      onSelectMethod={handleSelectMethod}
+      onBack={handleBack}
+    />
+  );
+}
+
+function DeviceSimulationWrapper({ selectedProfile }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!selectedProfile) {
+      navigate('/profile-selection');
+    }
+  }, [selectedProfile, navigate]);
+
+  const handleBack = () => {
+    navigate('/data-input');
+  };
+
+  const handleAnalyze = async (generatedData) => {
+    if (selectedProfile === 'adult') {
+      const response = await fetch(buildApiUrl('/api/analyze/adult'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(generatedData)
+      });
+
+      const result = await parseApiResponse(response);
+      navigate('/results', {
+        state: {
+          ...normalizeResult(result, generatedData),
+          fromDeviceSync: true
+        }
+      });
+      return;
     }
 
-    window.alert('Device syncing is not available yet. Please use manual input for now.')
-  }
+    const payload = {
+      age: generatedData.age,
+      weight: generatedData.weight,
+      weeks: generatedData.gestationalAge
+    };
 
-  return <DataInput onBack={() => navigate('/profile-selection')} onSelectMethod={handleSelectMethod} />
+    const response = await fetch(buildApiUrl('/api/analyze/pregnant'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await parseApiResponse(response);
+    navigate('/results', {
+      state: {
+        ...normalizeResult(result, generatedData),
+        fromDeviceSync: true
+      }
+    });
+  };
+
+  return (
+    <DeviceSimulation
+      profile={selectedProfile}
+      onBack={handleBack}
+      onAnalyze={handleAnalyze}
+    />
+  );
 }
 
 function AdultFormWrapper() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleSubmit = async (formData) => {
-    const payload = mapAdultPayload(formData)
+  const handleSubmit = async (data) => {
+    const response = await fetch(buildApiUrl('/api/analyze/adult'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
 
-    try {
-      const generatedReport = await generatePreventionReport(payload)
-      navigate('/report', {
-        state: {
-          assessmentLabel: 'General Adult',
-          patientInput: payload,
-          generatedReport,
-        },
-      })
-    } catch (error) {
-      window.alert(error.message || 'Unable to generate report right now.')
-    }
-  }
+    const result = await parseApiResponse(response);
+    navigate('/results', { state: normalizeResult(result, data) });
+  };
 
-  return <AdultForm onBack={() => navigate('/data-input')} onSubmit={handleSubmit} />
+  const handleBack = () => {
+    navigate('/data-input');
+  };
+
+  return (
+    <AdultForm 
+      onSubmit={handleSubmit}
+      onBack={handleBack}
+    />
+  );
 }
 
 function PregnantFormWrapper() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleSubmit = async (formData) => {
-    const payload = mapPregnantPayload(formData)
+  const handleSubmit = async (data) => {
+    const payload = {
+      age: data.age,
+      weight: data.weight,
+      weeks: data.gestationalAge
+    };
 
     try {
-      const generatedReport = await generatePreventionReport(payload)
-      navigate('/report', {
-        state: {
-          assessmentLabel: 'Maternal Care',
-          patientInput: payload,
-          generatedReport,
+      const response = await fetch(buildApiUrl('/api/analyze/pregnant'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-      })
+        body: JSON.stringify(payload)
+      });
+
+      const result = await parseApiResponse(response);
+      navigate('/results', { state: normalizeResult(result, data) });
     } catch (error) {
-      window.alert(error.message || 'Unable to generate report right now.')
+      console.error('Error:', error);
+      alert(error.message || 'Analysis failed. Please try again.');
     }
-  }
+  };
 
-  return <PregnantForm onBack={() => navigate('/profile-selection')} onSubmit={handleSubmit} />
+  const handleBack = () => {
+    navigate('/data-input');
+  };
+
+  return (
+    <PregnantForm 
+      onSubmit={handleSubmit}
+      onBack={handleBack}
+    />
+  );
 }
 
-function mapAdultPayload(formData) {
-  return {
-    assessmentType: 'general_adult',
-    fullName: 'General Adult Patient',
-    age: formData.age,
-    gender: formData.gender,
-    height: formData.height,
-    weight: formData.weight,
-    bloodPressureSystolic: formData.bloodPressureSystolic,
-    bloodPressureDiastolic: formData.bloodPressureDiastolic,
-    bloodSugar: formData.bloodSugar,
-    sleepHours: formData.sleep,
-    exerciseDays: formData.exercise,
-    stressLevel: mapStressLevel(formData.stress),
-  }
-}
-
-function mapPregnantPayload(formData) {
-  return {
-    assessmentType: 'pregnant_woman',
-    fullName: 'Maternal Care Patient',
-    age: formData.age,
-    height: formData.height,
-    weight: formData.weight,
-    gestationalAgeWeeks: formData.gestationalAge,
-    firstPregnancy: formData.firstPregnancy,
-    historyHighRiskPregnancy: formData.highRiskHistory,
-    bloodPressureSystolic: formData.bloodPressureSystolic,
-    bloodPressureDiastolic: formData.bloodPressureDiastolic,
-    bloodSugar: formData.bloodSugar,
-    sleepHours: formData.sleep,
-    waterIntake: formData.waterIntake,
-    stressLevel: mapStressLevel(formData.stress),
-  }
-}
-
-function mapStressLevel(stressValue) {
-  const stress = Number(stressValue)
-
-  if (stress >= 4) {
-    return 'high'
-  }
-
-  if (stress >= 3) {
-    return 'medium'
-  }
-
-  return 'low'
-}
-
-export default App
+export default App;

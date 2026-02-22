@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import logo from '../assets/logo.png';
-import editIcon from '../assets/edit-property.png';
 import '../styles/PregnantForm.css';
 
 const PregnantForm = ({ onSubmit, onBack }) => {
@@ -119,7 +118,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
           <div className="pregnant-form-row">
             <div className={`pregnant-input-card ${focusedField === 'age' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-user pregnant-input-icon" aria-hidden="true"></i>
                 <label>Age</label>
               </div>
               <input
@@ -138,7 +137,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'height' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-ruler-vertical pregnant-input-icon" aria-hidden="true"></i>
                 <label>Height (cm)</label>
               </div>
               <input
@@ -157,7 +156,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'weight' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-weight-scale pregnant-input-icon" aria-hidden="true"></i>
                 <label>Weight (kg)</label>
               </div>
               <input
@@ -179,7 +178,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
           <div className="pregnant-form-row">
             <div className={`pregnant-input-card ${focusedField === 'gestationalAge' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-calendar-week pregnant-input-icon" aria-hidden="true"></i>
                 <label>Gestational Age</label>
               </div>
               <input
@@ -198,7 +197,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'firstPregnancy' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-baby pregnant-input-icon" aria-hidden="true"></i>
                 <label>First Pregnancy?</label>
               </div>
               <select 
@@ -217,7 +216,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'highRiskHistory' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-triangle-exclamation pregnant-input-icon" aria-hidden="true"></i>
                 <label>High-Risk History?</label>
               </div>
               <select 
@@ -239,7 +238,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
           <div className="pregnant-form-row">
             <div className={`pregnant-input-card pregnant-bp-card ${focusedField === 'bp' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-heart-pulse pregnant-input-icon" aria-hidden="true"></i>
                 <label>Blood Pressure</label>
               </div>
               <div className="pregnant-bp-inputs">
@@ -250,7 +249,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
                   onChange={handleChange}
                   onFocus={() => setFocusedField('bp')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="Systolic"
+                  placeholder="Systolic (Avg: 120)"
                   required
                 />
                 <span className="pregnant-bp-divider">/</span>
@@ -261,7 +260,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
                   onChange={handleChange}
                   onFocus={() => setFocusedField('bp')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="Diastolic"
+                  placeholder="Diastolic (Avg: 80)"
                   required
                 />
               </div>
@@ -269,7 +268,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'bloodSugar' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-droplet pregnant-input-icon" aria-hidden="true"></i>
                 <label>Blood Sugar</label>
               </div>
               <input
@@ -279,7 +278,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
                 onChange={handleChange}
                 onFocus={() => setFocusedField('bloodSugar')}
                 onBlur={() => setFocusedField(null)}
-                placeholder="mg/dL"
+                placeholder="mg/dL (Avg: 100)"
                 step="0.1"
                 required
               />
@@ -290,7 +289,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
           <div className="pregnant-form-row">
             <div className={`pregnant-input-card ${focusedField === 'sleep' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-bed pregnant-input-icon" aria-hidden="true"></i>
                 <label>Sleep (hours)</label>
               </div>
               <input
@@ -310,7 +309,7 @@ const PregnantForm = ({ onSubmit, onBack }) => {
 
             <div className={`pregnant-input-card ${focusedField === 'waterIntake' ? 'focused' : ''}`}>
               <div className="pregnant-input-header">
-                <img src={editIcon} alt="" className="pregnant-input-icon" />
+                <i className="fa-solid fa-glass-water pregnant-input-icon" aria-hidden="true"></i>
                 <label>Water Intake</label>
               </div>
               <input

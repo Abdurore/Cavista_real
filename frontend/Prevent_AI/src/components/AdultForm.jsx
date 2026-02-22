@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import logo from '../assets/logo.png';
-import editIcon from '../assets/edit-property.png';
 import '../styles/AdultForm.css';
 
-const AdultForm = ({ onSubmit, onBack }) => {
+const AdultForm = ({ onBack, onSubmit }) => {
   const [formData, setFormData] = useState({
     age: '',
     gender: '',
@@ -16,9 +15,8 @@ const AdultForm = ({ onSubmit, onBack }) => {
     exercise: '',
     stress: 3
   });
-
+  const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-  const [showGenderError, setShowGenderError] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,16 +26,30 @@ const AdultForm = ({ onSubmit, onBack }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    if (!formData.gender) {
-      setShowGenderError(true);
-      setFocusedField('gender');
-      return;
+    try {
+      const apiData = {
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        bloodPressure: parseFloat(formData.bloodPressureSystolic),
+        bloodSugar: parseFloat(formData.bloodSugar),
+        sleep: parseFloat(formData.sleep),
+        exercise: parseInt(formData.exercise),
+        stress: formData.stress
+      };
+
+      await onSubmit(apiData);
+    } catch (error) {
+      console.error('API Error:', error);
+      alert(error.message || 'Analysis failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    onSubmit(formData);
   };
 
   const stressLevels = [
@@ -49,7 +61,6 @@ const AdultForm = ({ onSubmit, onBack }) => {
   ];
 
   const currentStress = stressLevels.find(s => s.value === formData.stress) || stressLevels[2];
-  const genderOptions = ['male', 'female', 'other'];
 
   return (
     <div className="adult-form-container">
@@ -85,7 +96,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
           <div className="adult-form-row">
             <div className={`adult-input-card ${focusedField === 'age' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-user adult-input-icon" aria-hidden="true"></i>
                 <label>Age</label>
               </div>
               <input
@@ -104,29 +115,22 @@ const AdultForm = ({ onSubmit, onBack }) => {
 
             <div className={`adult-input-card ${focusedField === 'gender' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-venus-mars adult-input-icon" aria-hidden="true"></i>
                 <label>Gender</label>
               </div>
-              <div className="adult-gender-options" role="radiogroup" aria-label="Gender">
-                {genderOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    role="radio"
-                    aria-checked={formData.gender === option}
-                    className={`adult-gender-option ${formData.gender === option ? 'selected' : ''}`}
-                    onClick={() => {
-                      setFormData(prev => ({ ...prev, gender: option }));
-                      setShowGenderError(false);
-                    }}
-                    onFocus={() => setFocusedField('gender')}
-                    onBlur={() => setFocusedField(null)}
-                  >
-                    {option.charAt(0).toUpperCase() + option.slice(1)}
-                  </button>
-                ))}
-              </div>
-              {showGenderError && <p className="adult-field-error">Please select a gender option.</p>}
+              <select 
+                name="gender" 
+                value={formData.gender} 
+                onChange={handleChange}
+                onFocus={() => setFocusedField('gender')}
+                onBlur={() => setFocusedField(null)}
+                required
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
             </div>
           </div>
 
@@ -134,7 +138,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
           <div className="adult-form-row">
             <div className={`adult-input-card ${focusedField === 'height' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-ruler-vertical adult-input-icon" aria-hidden="true"></i>
                 <label>Height (cm)</label>
               </div>
               <input
@@ -153,7 +157,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
 
             <div className={`adult-input-card ${focusedField === 'weight' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-weight-scale adult-input-icon" aria-hidden="true"></i>
                 <label>Weight (kg)</label>
               </div>
               <input
@@ -175,7 +179,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
           <div className="adult-form-row">
             <div className={`adult-input-card adult-bp-card ${focusedField === 'bp' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-heart-pulse adult-input-icon" aria-hidden="true"></i>
                 <label>Blood Pressure</label>
               </div>
               <div className="adult-bp-inputs">
@@ -186,7 +190,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
                   onChange={handleChange}
                   onFocus={() => setFocusedField('bp')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="Systolic"
+                  placeholder="Systolic (Avg: 120)"
                   required
                 />
                 <span className="adult-bp-divider">/</span>
@@ -197,7 +201,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
                   onChange={handleChange}
                   onFocus={() => setFocusedField('bp')}
                   onBlur={() => setFocusedField(null)}
-                  placeholder="Diastolic"
+                  placeholder="Diastolic (Avg: 80)"
                   required
                 />
               </div>
@@ -205,7 +209,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
 
             <div className={`adult-input-card ${focusedField === 'bloodSugar' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-droplet adult-input-icon" aria-hidden="true"></i>
                 <label>Blood Sugar</label>
               </div>
               <input
@@ -215,7 +219,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
                 onChange={handleChange}
                 onFocus={() => setFocusedField('bloodSugar')}
                 onBlur={() => setFocusedField(null)}
-                placeholder="mg/dL"
+                placeholder="mg/dL (Avg: 100)"
                 step="0.1"
                 required
               />
@@ -226,7 +230,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
           <div className="adult-form-row">
             <div className={`adult-input-card ${focusedField === 'sleep' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-bed adult-input-icon" aria-hidden="true"></i>
                 <label>Sleep (hours)</label>
               </div>
               <input
@@ -246,7 +250,7 @@ const AdultForm = ({ onSubmit, onBack }) => {
 
             <div className={`adult-input-card ${focusedField === 'exercise' ? 'focused' : ''}`}>
               <div className="adult-input-header">
-                <img src={editIcon} alt="" className="adult-input-icon" />
+                <i className="fa-solid fa-person-running adult-input-icon" aria-hidden="true"></i>
                 <label>Exercise (days/week)</label>
               </div>
               <input
@@ -324,12 +328,25 @@ const AdultForm = ({ onSubmit, onBack }) => {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button type="submit" className="adult-submit-btn">
-            <span>Analyze Health Risk</span>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+          {/* Submit Button with Loading State */}
+          <button 
+            type="submit" 
+            className="adult-submit-btn"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span>Analyzing with AI...</span>
+                <div className="loading-spinner"></div>
+              </>
+            ) : (
+              <>
+                <span>Analyze Health Risk</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
           </button>
         </form>
       </div>
