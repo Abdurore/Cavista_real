@@ -1,0 +1,18 @@
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Virtual envs
+venv/
+.venv/
+backend/venv/
+
+# Secrets and local env files
+.env
+.env.*
+backend/.env
+backend/.env.*
+
+# Keep example env templates
+!.env.example
+!backend/.env.example

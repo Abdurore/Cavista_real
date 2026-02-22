@@ -1,14 +1,2 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-.env
-venv
-__pycache__/
-# External AI API Configuration
-EXTERNAL_AI_API_URL=https://api.openai.com/v1/chat/completions
-EXTERNAL_AI_API_KEY=your-api-key-here
-EXTERNAL_AI_TIMEOUT=5
-USE_EXTERNAL_AI=true
-
-# Server Settings
-HOST=0.0.0.0
-PORT=8000
