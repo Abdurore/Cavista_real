@@ -1,0 +1,266 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.profile-container {
+  min-height: 100vh;
+  background: white;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  position: relative;
+}
+
+/* Left Side - Branding */
+.left-brand {
+  flex: 1;
+  padding: 180px 0 0 60px;
+  background: white;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 60px;
+}
+
+.profile-container .brain-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.profile-container .brand-name {
+  font-weight: 600;
+  font-size: 48px;
+  letter-spacing: -0.32px;
+  color: #BB243E;
+}
+
+.main-title {
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 1.2;
+  letter-spacing: -0.32px;
+  color: #000000;
+  margin-bottom: 20px;
+  white-space: nowrap;
+  text-align: left; /* Ensure left alignment */
+}
+
+.description {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.32px;
+  color: #666;
+  max-width: 400px;
+  text-align: left; /* Ensure left alignment */
+}
+
+/* Right Side - Profile Selection */
+.right-selection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.profiles {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 100%;
+  max-width: 280px;
+}
+
+/* Profile Card */
+.profile-card {
+  box-sizing: border-box;
+  width: 100%;
+  height: 180px;
+  border: 2.5px solid #BB243E;
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  transition: transform 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 20px rgba(187, 36, 62, 0.1);
+}
+
+/* Icon Circle */
+.icon-circle {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  background: #BB243E;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Profile Title */
+.profile-title {
+  position: absolute;
+  top: 55px;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 21px;
+  text-align: center;
+  letter-spacing: -0.32px;
+  color: #000000;
+}
+
+/* Profile Subtitle */
+.profile-subtitle {
+  position: absolute;
+  top: 90px;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  letter-spacing: -0.32px;
+  color: #797878;
+  width: 180px;
+}
+
+/* Footer - Centered at bottom */
+.footer-text {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: 400;
+  font-size: 14px;
+  color: #BB243E;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Tablet Responsive */
+@media (max-width: 1024px) {
+  .left-brand {
+    padding: 130px 0 0 40px;
+  }
+  
+  .main-title {
+    font-size: 42px;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+  }
+  
+  .left-brand {
+    padding: 85px 20px 30px;
+    text-align: center;
+  }
+  
+  .logo-section {
+    justify-content: center;
+  }
+  
+  .main-title {
+    font-size: 36px;
+    white-space: normal;
+    text-align: center; /* Center on mobile */
+  }
+  
+  .description {
+    margin: 0 auto;
+    text-align: center; /* Center on mobile */
+  }
+  
+  .right-selection {
+    padding: 20px;
+  }
+  
+  .profile-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .footer-text {
+    position: relative;
+    bottom: auto;
+    margin: 40px 0 20px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .main-title {
+    font-size: 32px;
+  }
+  
+  .profile-container .brain-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .profile-container .brand-name {
+    font-size: 36px;
+  }
+  
+  .profile-card {
+    height: 160px;
+  }
+  
+  .profile-title {
+    font-size: 18px;
+    top: 50px;
+  }
+  
+  .profile-subtitle {
+    font-size: 12px;
+    top: 80px;
+    width: 160px;
+  }
+}
+/* Add cursor pointer to cards */
+.profile-card {
+  cursor: pointer;
+}
+/* Add to your ProfileSelection.css */
+.back-btn {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  z-index: 10;
+  background: transparent;
+  border: 1px solid #BB243E;
+  color: #BB243E;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.back-btn:hover {
+  background: #BB243E;
+  color: white;
+}
