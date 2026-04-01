@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.welcome-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.welcome-container .content {
+  text-align: center;
+  max-width: 600px;
+  padding: 2rem;
+}
+
+.welcome-container .logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-container .brain-logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.welcome-container .brand-name {
+  font-size: 44px;
+  font-weight: 600;
+  color: #bb243e;
+  letter-spacing: -0.5px;
+}
+
+.welcome-container .description {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 2.5rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.welcome-container .continue-btn {
+  background: #bb243e;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  font-size: 18px;
+  font-weight: 500;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.welcome-container .continue-btn:hover {
+  background: #9e1f34;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .welcome-container .brain-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .welcome-container .brand-name {
+    font-size: 34px;
+  }
+  
+  .welcome-container .description {
+    font-size: 16px;
+    white-space: normal;
+  }
+  
+  .welcome-container .continue-btn {
+    padding: 0.875rem 2.5rem;
+    font-size: 16px;
+  }
+}
